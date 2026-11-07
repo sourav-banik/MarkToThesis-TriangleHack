@@ -1,4 +1,4 @@
-# Part 1: application foundation and domain contracts
+# Application architecture: Parts 1 and 2
 
 ## Boundaries
 
@@ -6,7 +6,7 @@ This is one modular Next.js application. Route files render feature components; 
 
 - Claims own original wording, drafts, confirmed terms, and committed versions.
 - Market data owns precise instrument identities and normalized observations.
-- Resolution consumes committed terms and observations. It will determine outcomes in Part 2; AI must not determine them.
+- Resolution consumes committed terms, independent schedules, and observations. The pure Part 2 engine determines outcomes; AI must not determine them. See [resolution rules](resolution.md).
 - AI proposes a draft or reviews supplied evidence. Its explanation is separate from a numerical resolution.
 - Feed and profiles display records. The sample feed currently displays unsaved examples, not committed claims.
 - Provider clients and secrets belong behind `src/lib/server` or server-only feature services. Client components may import pure contracts and presentation helpers.
@@ -41,17 +41,19 @@ WTI explicitly permits signed observations. The resolver must reject an undefine
 
 ## Horizons and windows
 
-Durations accept positive whole days, months, or years, including one-day and multi-year horizons. Alternatively the author may choose a target date. A month is a calendar month, not 30 days. Calendar arithmetic clamps end-of-month overflow to the last valid date; leap-year behavior needs Part 2 tests.
+Durations accept positive whole days, months, or years, including one-day and multi-year horizons. Alternatively the author may choose a target date. A month is a calendar month, not 30 days. The engine clamps end-of-month overflow to the last valid date, with leap-year and multi-year tests.
 
-The first eligible daily observation strictly after commitment supplies the starting value. A duration is measured from that starting session's date. The ending observation is the first eligible observation on or after the target date. The resolver must align comparison endpoints, define a shared eligible window for differing calendars, and validate actual observation availability. It must not silently compare different market windows.
+The first eligible daily observation strictly after commitment supplies the starting value. A duration is measured from that starting session's date. The ending observation is the first eligible observation on or after the target date. The engine aligns comparison endpoints on common session dates, retaining each source's explicit fixing times. It validates actual observation availability and never picks a later price to replace a missing scheduled observation. These are dated-fixing comparisons, not synchronized execution returns.
 
-For a date horizon, commitment validation requires a date after the relevant commitment date. Part 2 must additionally ensure a valid, nonzero measurement window after the actual starting observation is selected. Date calculations must use the saved instrument calendar and time zone. Missing data results in awaiting data, not a substitute fixing or a premature miss.
+For a date horizon, commitment validation requires a date after the relevant commitment date. The engine additionally requires a valid, nonzero window after selecting the actual starting observation. Date calculations use saved calendar rules and fixing timestamps. Missing data results in awaiting data, not a substitute fixing or a premature miss.
 
 Very long horizons that exceed the implementation's supported date representation must fail explicitly in window construction. Do not quietly clamp requested durations or change them.
 
 ## Return conventions
 
 Price performance initially excludes dividends and adjusts for splits. Store the convention with every version. Yield levels and changes do not apply the price-return convention.
+
+Literal quoted-value ranges use unadjusted nominal prices. An equity price target is not silently rebased after a split. Percentage-return tests use split-adjusted equity/ETF observations; non-equity price series use unadjusted observations. This distinction is saved in the resolution inputs and formula version.
 
 The contract separately represents a future total-return convention with reinvested dividends and an explicit methodology ID. It is rejected by current commitment validation; adding the type is not enabling dividend-inclusive scoring. Implement and verify its data requirements and calculator before permitting it.
 
@@ -75,7 +77,7 @@ AI reviews are not causal proof of a price movement. There is no market-performa
 
 ## Next increment
 
-Implement measurement-window construction and deterministic resolution with synthetic observations. Cover both comparison directions, both hold meanings, inclusive endpoint/daily ranges, different calendars, yield changes, signed/zero prices, missing observations, split bases, and calendar-month/year boundaries. Do not connect a model or live provider to decide these outcomes.
+Part 2 is implemented and checked against fabricated observations. Part 3 will connect the replay interface to these results and show the full calculation trail. Keep replay and synthetic labels visible. Do not present fixtures as actual historical prices, enable real publishing, or ask AI to decide outcomes.
 
 ## Dependency maintenance
 
