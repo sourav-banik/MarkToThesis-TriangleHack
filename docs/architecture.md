@@ -1,0 +1,82 @@
+# Part 1: application foundation and domain contracts
+
+## Boundaries
+
+This is one modular Next.js application. Route files render feature components; they do not contain provider integrations or financial calculations. Contracts use Zod as the runtime source of truth, with TypeScript types inferred from those schemas.
+
+- Claims own original wording, drafts, confirmed terms, and committed versions.
+- Market data owns precise instrument identities and normalized observations.
+- Resolution consumes committed terms and observations. It will determine outcomes in Part 2; AI must not determine them.
+- AI proposes a draft or reviews supplied evidence. Its explanation is separate from a numerical resolution.
+- Feed and profiles display records. The sample feed currently displays unsaved examples, not committed claims.
+- Provider clients and secrets belong behind `src/lib/server` or server-only feature services. Client components may import pure contracts and presentation helpers.
+
+Add auth services and database migrations when implementing persistent commitment. Do not add empty service wrappers, fake authentication, or simulated publishing now.
+
+## Claim kinds
+
+| Kind                     | Testable meaning                                                                                                                                                                              |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Outperform               | Strictly greater price return than the benchmark; for two yield series, strictly greater yield change in basis points, explicitly labeled as yield change rather than investment performance. |
+| Underperform             | Strictly smaller price return or explicitly specified yield change than the benchmark.                                                                                                        |
+| Hold / neutral           | Change stays within a specified positive tolerance of its starting observation, checked either at review or at every daily observation.                                                       |
+| Hold / maintain position | Author's position stance; unscored. It neither verifies a position nor creates a win/miss.                                                                                                    |
+| Range                    | Inclusive lower and upper bounds, checked at review or every daily observation. Metric is quoted value, price return percent, or yield change in basis points.                                |
+
+No default benchmark, tolerance, range, or confidence should be invented by a future parser. Incomplete drafts are separate from confirmed terms. The workbench is a format sandbox with editable example defaults, not an AI interpretation of user text.
+
+Comparison metrics must match observation types. Yield changes cannot be compared against equity price returns. Cross-currency price comparisons are rejected until an explicit FX method exists. Strict comparison ties will be not met. Range bounds are inclusive. Daily sampling does not establish that a condition held intraday.
+
+## Instrument identity and coverage
+
+The starter catalog demonstrates stocks, ETFs, Treasury yield, gold spot, WTI spot, Bitcoin, Ethereum, and EUR/USD. The schema is not tied to that catalog: additional stocks, indices, commodities, or other supported asset classes can be represented with an explicit identity.
+
+An identity includes stable internal ID, symbol, name, asset class, venue, exact series definition, quote units, observation calendar, fixing description, and IANA time zone. Source and provider series ID are retained on observations. Before a live commitment is enabled, its service must bind the instrument to an available provider series and an exact fixing. Several catalog entries explicitly leave that binding pending. Do not substitute GLD for spot gold or an oil futures series for WTI spot.
+
+The U.S. 5-year Treasury example represents [FRED DGS5 / Federal Reserve H.15](https://fred.stlouisfed.org/series/DGS5): a constant-maturity yield quoted in percent. A move from 4% to 4.25% is +25 basis points, not a 6.25% investment return. Treasury publication time may differ from its observation date.
+
+Calendar types distinguish exchange sessions, UTC daily crypto observations, and publisher daily series. A future adapter must supply the actual regular-session or fixing schedule. Publication delays, weekends, and holidays cannot be handled by pretending every instrument has a U.S. equity close.
+
+WTI explicitly permits signed observations. The resolver must reject an undefined or economically unsuitable percentage-return denominator (for example a zero or negative starting price) with a documented unclear result instead of blindly dividing. Valid quote-level ranges can still be evaluated.
+
+## Horizons and windows
+
+Durations accept positive whole days, months, or years, including one-day and multi-year horizons. Alternatively the author may choose a target date. A month is a calendar month, not 30 days. Calendar arithmetic clamps end-of-month overflow to the last valid date; leap-year behavior needs Part 2 tests.
+
+The first eligible daily observation strictly after commitment supplies the starting value. A duration is measured from that starting session's date. The ending observation is the first eligible observation on or after the target date. The resolver must align comparison endpoints, define a shared eligible window for differing calendars, and validate actual observation availability. It must not silently compare different market windows.
+
+For a date horizon, commitment validation requires a date after the relevant commitment date. Part 2 must additionally ensure a valid, nonzero measurement window after the actual starting observation is selected. Date calculations must use the saved instrument calendar and time zone. Missing data results in awaiting data, not a substitute fixing or a premature miss.
+
+Very long horizons that exceed the implementation's supported date representation must fail explicitly in window construction. Do not quietly clamp requested durations or change them.
+
+## Return conventions
+
+Price performance initially excludes dividends and adjusts for splits. Store the convention with every version. Yield levels and changes do not apply the price-return convention.
+
+The contract separately represents a future total-return convention with reinvested dividends and an explicit methodology ID. It is rejected by current commitment validation; adding the type is not enabling dividend-inclusive scoring. Implement and verify its data requirements and calculator before permitting it.
+
+Save adjustment mode and an adjustment-basis ID on observations. A starting historical adjusted price saved before a later split may be incompatible with an end price downloaded afterward. The resolver must use a consistent basis for both endpoints, preserve exact inputs, and never use rounded display returns to decide an outcome. Spot instruments and ETFs retain their separate identities.
+
+## Lifecycle and trust
+
+The shared lifecycle is awaiting start, active, awaiting data, met, not met, unclear, or unscored. Drafts are not committed records. A withdraw/annotation event in a later increment must not erase the original terms or reset the original measurement window.
+
+Committed versions preserve original text, confirmed terms, author, actual server logging timestamp, publication timestamp, visibility, and context. Live and replay contexts are distinct. A replay has a separate simulated historical commitment timestamp and dataset ID; it must not backdate the actual logging timestamp.
+
+Server services and database policies will enforce atomic creation, ownership, idempotency, and append-only records in the persistence increment. A TypeScript readonly type or schema validation alone does not enforce database immutability. Changed forecast terms must create a new linked claim without replacing the original scored call; version links are for retained provenance, not score resets.
+
+Prospective public statistics must exclude replays, private claims, late-publicized calls, and position-only holds. Public visibility and withdrawal rules must prevent selectively hiding misses. Profiles will need explicit sample sizes and pending/unclear counts. None of these statistics are fabricated in the current UI.
+
+## Evidence and AI
+
+Evidence retains URL, publisher, publication and retrieval timestamps, saved excerpt, and who supplied it. Each reasoning assessment references evidence IDs supplied with that review. Supported/contradicted assessments require evidence; unresolved is a valid result. The future review service must also verify assumption IDs against the committed version and enforce evidence cutoffs for replay scenarios.
+
+AI reviews are not causal proof of a price movement. There is no market-performance outcome field in their contract. Only the deterministic resolver may produce the saved resolution.
+
+## Next increment
+
+Implement measurement-window construction and deterministic resolution with synthetic observations. Cover both comparison directions, both hold meanings, inclusive endpoint/daily ranges, different calendars, yield changes, signed/zero prices, missing observations, split bases, and calendar-month/year boundaries. Do not connect a model or live provider to decide these outcomes.
+
+## Dependency maintenance
+
+The targeted `@typescript-eslint/typescript-estree` minimatch override keeps the lint toolchain on the patched 11.x glob parser instead of the vulnerable transitive 10.x version. Recheck and remove this override when the upstream dependency accepts a patched release. It does not affect the production application's claim logic.
