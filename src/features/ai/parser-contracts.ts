@@ -25,6 +25,7 @@ const nullableField = <T extends z.ZodType>(schema: T) =>
   z.strictObject({ value: schema.nullable(), quote: z.string().max(8000) });
 const instrumentIds = instrumentCatalog.map((item) => item.id) as [string, ...string[]];
 export const extractionSchema = z.strictObject({
+  scope: z.enum(["single", "multiple", "conditional"]),
   instrumentId: nullableField(z.enum(instrumentIds)),
   kind: nullableField(z.enum(["outperform", "underperform", "hold", "range"])),
   benchmarkId: nullableField(z.enum(instrumentIds)),

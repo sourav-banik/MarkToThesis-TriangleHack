@@ -6,6 +6,17 @@ import { instruments } from "@/features/market-data/catalog";
 
 const metadata = { id: "proposal-test", model: "fixture-model", now: "2026-11-07T20:00:00Z" };
 describe("claim proposal normalization", () => {
+  it("requires a choice for multiple or conditional calls even when one extracted forecast is complete", () => {
+    for (const scope of ["multiple", "conditional"] as const) {
+      const result = normalizeExtraction(
+        { ...comparisonExtraction(), scope },
+        parserRequestSchema.parse({ originalText: completeCall }),
+        metadata,
+      );
+      expect(result.ready).toBe(false);
+      expect(result.draft.missingFields).toContain("ambiguity");
+    }
+  });
   it("requires missing terms and never fills a default horizon or benchmark", () => {
     const input = parserRequestSchema.parse({
       originalText: "Apple might do better than the market.",
@@ -130,7 +141,9 @@ describe("claim proposal normalization", () => {
     const input = parserRequestSchema.parse({
       originalText: "US5Y between 3.5% and 4.5% at review over 30 calendar days",
     });
-    expect(normalizeExtraction(raw, input, metadata).ready).toBe(true);
+    const yieldResult = normalizeExtraction(raw, input, metadata);
+    expect(yieldResult.ready).toBe(false);
+    expect(yieldResult.draft.missingFields).toContain("instrument_reference");
     const incompatible = normalizeExtraction(
       { ...raw, kind: { value: "outperform", quote: "outperform" } },
       parserRequestSchema.parse({ originalText: "US5Y outperform SPY over 30 calendar days" }),

@@ -5,14 +5,26 @@ import { buttonClass } from "@/components/ui/button";
 
 export function ResolveClaimButton({ claimId }: { claimId: string }) {
   const [state, setState] = useState<"idle" | "working" | "done" | "error">("idle");
+  const [message, setMessage] = useState("");
   async function resolve() {
     setState("working");
     try {
       const response = await fetch(`/api/claims/${claimId}/resolve`, { method: "POST" });
-      if (!response.ok) throw new Error("Resolution failed");
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error ?? "Resolution failed");
+      if (!result.attempt?.resolution) {
+        setMessage(
+          result.attempt?.reason ?? "This claim is still waiting for its review observations.",
+        );
+        setState("idle");
+        return;
+      }
       setState("done");
       window.location.reload();
-    } catch {
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Live resolution could not be completed.",
+      );
       setState("error");
     }
   }
@@ -21,7 +33,11 @@ export function ResolveClaimButton({ claimId }: { claimId: string }) {
       <button className={buttonClass("primary")} onClick={resolve} disabled={state === "working"}>
         {state === "working" ? "Checking Massive…" : "Resolve with live data"}
       </button>
-      {state === "error" && <p className="form-error">Live resolution could not be completed.</p>}
+      {message && (
+        <p role="status" className={state === "error" ? "form-error" : "field-help"}>
+          {message}
+        </p>
+      )}
       {state === "done" && <p className="form-success">Resolution saved.</p>}
     </div>
   );

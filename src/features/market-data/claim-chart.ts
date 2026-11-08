@@ -3,48 +3,125 @@ import { z } from "zod";
 import { calendarDateAt } from "@/lib/dates";
 import { HttpError } from "@/lib/server/http";
 import type { PersistedClaim } from "@/features/claims/live-contracts";
+import type { ConfirmedTerms } from "@/features/claims/contracts";
 import { MassiveAdapter } from "./massive";
 import { claimChartSchema } from "./chart-contracts";
+import { liveBindingFor } from "./live-bindings";
+import type { ObservationRequest, PriceSnapshot } from "./contracts";
+
+// Cache only public market data, never claim text, identity, or visibility.
+const chartPrices = new Map<string, { expires: number; data: Promise<PriceSnapshot[]> }>();
+async function chartObservations(request: ObservationRequest) {
+  const key = JSON.stringify([
+    request.instrument.id,
+    request.fromDate,
+    request.throughDate,
+    request.adjustment,
+  ]);
+  const existing = chartPrices.get(key);
+  if (existing && existing.expires > Date.now()) return existing.data;
+  for (const [id, value] of chartPrices) if (value.expires <= Date.now()) chartPrices.delete(id);
+  if (chartPrices.size >= 64) chartPrices.delete(chartPrices.keys().next().value!);
+  const data = new MassiveAdapter().getObservations(request).catch((error) => {
+    chartPrices.delete(key);
+    throw error;
+  });
+  chartPrices.set(key, { expires: Date.now() + 60000, data });
+  return data;
+}
 
 function shiftDate(date: string, days: number) {
-  return new Date(Date.parse(`${date}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
+  return new Date(Date.parse(`${date}T00:00:00Z`) + days * 86400000).toISOString().slice(0, 10);
 }
 function provider(binding: unknown) {
-  return z.object({ provider: z.string() }).safeParse(binding).data?.provider ?? null;
+  return z.object({ provider: z.string(), seriesId: z.string() }).safeParse(binding).data;
+}
+
+export async function getPredictionChart(
+  terms: ConfirmedTerms,
+  committedAt: string | null,
+  asOf = new Date().toISOString(),
+) {
+  const instrument = terms.instrument;
+  const prediction = terms.prediction;
+  const benchmark =
+    prediction.kind === "outperform" || prediction.kind === "underperform"
+      ? prediction.benchmark
+      : null;
+  for (const asset of [instrument, ...(benchmark ? [benchmark] : [])]) {
+    if (liveBindingFor(asset)?.provider !== "massive")
+      throw new HttpError(422, "Price-chart previews support AAPL, MSFT, NVDA, SPY, QQQ, and GLD.");
+  }
+  const throughDate = calendarDateAt(asOf, instrument.observation.timeZone)!;
+  const commitmentDate = committedAt
+    ? calendarDateAt(committedAt, instrument.observation.timeZone)!
+    : throughDate;
+  // Show context even when the author has only just published the call.
+  const fromDate = [
+    shiftDate(throughDate, -365),
+    [shiftDate(commitmentDate, -14), shiftDate(throughDate, -90)].sort()[0],
+  ].sort()[1];
+  const adjustment =
+    prediction.kind === "range" && prediction.metric === "quoted_value"
+      ? "unadjusted"
+      : "split_adjusted";
+  try {
+    const asset = await chartObservations({ instrument, fromDate, throughDate, adjustment });
+    const benchmarkSnapshots = benchmark
+      ? await chartObservations({
+          instrument: benchmark,
+          fromDate,
+          throughDate,
+          adjustment: "split_adjusted",
+        })
+      : null;
+    return claimChartSchema.parse({
+      asset: {
+        symbol: instrument.symbol,
+        points: asset.map((item) => ({ date: item.sessionDate, value: item.value })),
+      },
+      benchmark:
+        benchmark && benchmarkSnapshots
+          ? {
+              symbol: benchmark.symbol,
+              points: benchmarkSnapshots.map((item) => ({
+                date: item.sessionDate,
+                value: item.value,
+              })),
+            }
+          : null,
+      fromDate,
+      throughDate,
+      asOf: new Date().toISOString(),
+      committedAt,
+      terms,
+      adjustment:
+        adjustment === "unadjusted"
+          ? "unadjusted_quoted_price"
+          : "split_adjusted_price_return_excluding_dividends",
+    });
+  } catch {
+    throw new HttpError(
+      503,
+      "Daily price data could not be loaded. Your prediction can still be reviewed and published; retry the chart shortly.",
+    );
+  }
 }
 
 export async function getClaimChart(claim: PersistedClaim, asOf = new Date().toISOString()) {
-  const instrument = claim.version.terms.instrument;
-  if (instrument.assetClass !== "stock" && instrument.assetClass !== "etf")
-    throw new HttpError(422, "A Massive price chart is currently available for U.S. stocks and ETFs only.");
-  if (provider(claim.marketBindings.asset) !== "massive")
-    throw new HttpError(422, "This claim was committed before the Massive market-data binding.");
-  const throughDate = calendarDateAt(asOf, instrument.observation.timeZone);
-  const commitmentDate = calendarDateAt(claim.version.committedAt, instrument.observation.timeZone);
-  if (!throughDate || !commitmentDate) throw new HttpError(503, "The chart window could not be calculated.");
-  // Keep demo pages quick and within ordinary daily-bar plan limits.
-  const fromDate = [commitmentDate, shiftDate(throughDate, -365)].sort().at(-1)!;
-  const adapter = new MassiveAdapter();
-  try {
-    const asset = await adapter.getObservations({ instrument, fromDate, throughDate, adjustment: "split_adjusted" });
-    const prediction = claim.version.terms.prediction;
-    const benchmark = prediction.kind === "outperform" || prediction.kind === "underperform" ? prediction.benchmark : null;
-    if (benchmark && provider(claim.marketBindings.benchmark) !== "massive")
-      throw new HttpError(422, "This benchmark was committed before the Massive market-data binding.");
-    const benchmarkSnapshots = benchmark
-      ? await adapter.getObservations({ instrument: benchmark, fromDate, throughDate, adjustment: "split_adjusted" })
-      : null;
-    return claimChartSchema.parse({
-      asset: { symbol: instrument.symbol, points: asset.map((item) => ({ date: item.sessionDate, value: item.value })) },
-      benchmark: benchmark && benchmarkSnapshots
-        ? { symbol: benchmark.symbol, points: benchmarkSnapshots.map((item) => ({ date: item.sessionDate, value: item.value })) }
-        : null,
-      fromDate,
-      throughDate,
-      adjustment: "split_adjusted_price_return_excluding_dividends",
-    });
-  } catch (error) {
-    if (error instanceof HttpError) throw error;
-    throw new HttpError(503, error instanceof Error ? error.message : "Market data is temporarily unavailable.");
-  }
+  const terms = claim.version.terms;
+  const prediction = terms.prediction;
+  const asset = provider(claim.marketBindings.asset);
+  const benchmark = provider(claim.marketBindings.benchmark);
+  if (
+    asset?.provider !== "massive" ||
+    asset.seriesId !== terms.instrument.symbol ||
+    ((prediction.kind === "outperform" || prediction.kind === "underperform") &&
+      (benchmark?.provider !== "massive" || benchmark.seriesId !== prediction.benchmark.symbol))
+  )
+    throw new HttpError(
+      422,
+      "This saved claim is not bound to the supported Massive price series.",
+    );
+  return getPredictionChart(terms, claim.version.committedAt, asOf);
 }

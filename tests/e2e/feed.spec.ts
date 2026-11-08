@@ -136,7 +136,17 @@ test("owner summary covers all history, private filters stay local to owner scop
         ? [claim(2, "private")]
         : [claim(1), claim(2, "private")];
     return route.fulfill({
-      json: pageResult(records, { summary: { awaitingStart: 37, unscored: 5 } }),
+      json: pageResult(records, {
+        summary: {
+          total: 42,
+          scored: 24,
+          met: 15,
+          notMet: 9,
+          pending: 12,
+          unclear: 1,
+          unscored: 5,
+        },
+      }),
     });
   });
   await page.goto("/profile?record=demo");
@@ -149,6 +159,7 @@ test("owner summary covers all history, private filters stay local to owner scop
     "href",
     "/u/fixture_analyst",
   );
+  await page.getByText("Filter history", { exact: true }).click();
   await page.getByLabel("Claim visibility", { exact: true }).selectOption("private");
   await page.getByRole("button", { name: "Apply filters", exact: true }).click();
   await expect(page.locator(".live-claim-card")).toHaveCount(1);

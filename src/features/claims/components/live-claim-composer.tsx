@@ -14,6 +14,7 @@ import { describePrediction, formatHorizon } from "../presentation";
 import type { ConfirmedTerms } from "../contracts";
 import { ClaimWorkbench } from "./claim-workbench";
 import { ClaudeAssistant } from "@/features/ai/components/claude-assistant";
+import { DraftPredictionChart } from "./claim-price-chart";
 
 function startingTerms(): ConfirmedTerms {
   return {
@@ -31,7 +32,8 @@ export function LiveClaimComposer() {
   const [terms, setTerms] = useState(startingTerms);
   const [original, setOriginal] = useState("");
   const [rationale, setRationale] = useState("");
-  const [visibility, setVisibility] = useState<"public" | "private">("private");
+  const [falsification, setFalsification] = useState("");
+  const [visibility, setVisibility] = useState<"public" | "private">("public");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [entryMode, setEntryMode] = useState<"ai" | "manual">("ai");
@@ -41,7 +43,21 @@ export function LiveClaimComposer() {
   const saving = useRef(false);
 
   function review(candidate: ConfirmedTerms) {
-    const proposed = { ...candidate, rationale: rationale.trim() };
+    const proposed = {
+      ...candidate,
+      rationale: rationale.trim(),
+      assumptions:
+        falsification.trim() && rationale.trim()
+          ? [
+              ...candidate.assumptions.filter((item) => item.id !== "author-reasoning"),
+              {
+                id: "author-reasoning",
+                statement: rationale.trim(),
+                falsificationCondition: falsification.trim(),
+              },
+            ]
+          : candidate.assumptions,
+    };
     const check = liveClaimRequestSchema.safeParse({
       idempotencyKey: crypto.randomUUID(),
       originalText: original,
@@ -148,7 +164,8 @@ export function LiveClaimComposer() {
               <label htmlFor="live-original">Original market call</label>
               <textarea
                 id="live-original"
-                rows={3}
+                placeholder="For example: I expect AAPL to outperform SPY over three months because services demand is resilient. Confidence: 70%."
+                rows={4}
                 maxLength={8000}
                 value={original}
                 onChange={(event) => {
@@ -177,12 +194,28 @@ export function LiveClaimComposer() {
                 value={visibility}
                 onChange={(event) => setVisibility(event.target.value as "public" | "private")}
               >
-                <option value="private">Private · only you</option>
                 <option value="public">Public · visible in your record</option>
+                <option value="private">Private · only you</option>
               </select>
               <p className="field-help">
                 Public calls remain visible. Private calls cannot be selectively published after
                 their outcome. Original terms are retained.
+              </p>
+            </div>
+            <div className="field-group">
+              <label htmlFor="live-falsification">
+                What evidence would change your view? (optional)
+              </label>
+              <textarea
+                id="live-falsification"
+                rows={2}
+                maxLength={2000}
+                value={falsification}
+                onChange={(event) => setFalsification(event.target.value)}
+              />
+              <p className="field-help">
+                When reasoning is supplied, this becomes a saved assumption that can be reviewed
+                against later evidence.
               </p>
             </div>
             <p className="field-help">
@@ -294,6 +327,7 @@ export function LiveClaimComposer() {
           <Badge tone="purple">Review a real database commitment</Badge>
           <h2>Confirm the exact test.</h2>
           <blockquote className="original-call">{original.trim()}</blockquote>
+          <DraftPredictionChart terms={terms} />
           <dl className="detail-list">
             <div>
               <dt>Condition</dt>

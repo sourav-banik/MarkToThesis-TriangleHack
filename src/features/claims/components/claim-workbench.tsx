@@ -9,6 +9,7 @@ import { instrumentCatalog, instruments } from "@/features/market-data/catalog";
 import { commitmentTermsSchema, type ConfirmedTerms, type Prediction } from "../contracts";
 import { predictionLabels } from "../presentation";
 import { ClaimSummary } from "./claim-summary";
+import { DraftPredictionChart } from "./claim-price-chart";
 
 const kinds = ["outperform", "underperform", "hold", "range"] as const;
 const numberValue = (value: string) => (value.trim() === "" ? Number.NaN : Number(value));
@@ -184,7 +185,8 @@ export function ClaimWorkbench({
           </select>
           <p className="field-help">
             Starter examples across asset classes. Live Massive coverage currently applies to U.S.
-            stocks and ETFs; other identities remain explicitly bounded until their provider is defined.
+            stocks and ETFs; other identities remain explicitly bounded until their provider is
+            defined.
           </p>
         </div>
         {isComparison && (
@@ -437,6 +439,7 @@ export function ClaimWorkbench({
             </p>
           </div>
         )}
+        {purpose === "live" && result.success && <DraftPredictionChart terms={result.data} />}
         <div className="aside-card compact">
           <LockKeyhole size={20} className="purple-text" aria-hidden="true" />
           <h3>A preview is not a commitment.</h3>

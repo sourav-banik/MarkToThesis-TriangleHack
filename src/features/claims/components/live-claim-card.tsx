@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
+import { ClaimPriceChart } from "./claim-price-chart";
 import { LockKeyhole, Globe2, ArrowUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AssetMark } from "@/components/ui/asset-mark";
@@ -7,6 +11,7 @@ import { describePrediction, formatHorizon } from "../presentation";
 import type { Profile } from "@/features/profiles/contracts";
 
 export function LiveClaimCard({ claim, author }: { claim: PersistedClaim; author: Profile }) {
+  const [showChart, setShowChart] = useState(false);
   const version = claim.version;
   return (
     <article className="live-claim-card">
@@ -25,14 +30,34 @@ export function LiveClaimCard({ claim, author }: { claim: PersistedClaim; author
             <span>Live claim · {formatHorizon(version.terms.horizon)}</span>
           </div>
         </div>
-        <Badge tone={claim.status === "unscored" || claim.status === "not_met" ? "muted" : "purple"}>
-          {claim.status === "unscored" ? "Unscored" : claim.status === "met" ? "Met" : claim.status === "not_met" ? "Not met" : claim.status === "unclear" ? "Unclear" : "Awaiting data"}
+        <Badge
+          tone={claim.status === "unscored" || claim.status === "not_met" ? "muted" : "purple"}
+        >
+          {claim.status === "unscored"
+            ? "Unscored"
+            : claim.status === "met"
+              ? "Met"
+              : claim.status === "not_met"
+                ? "Not met"
+                : claim.status === "unclear"
+                  ? "Unclear"
+                  : "Awaiting data"}
         </Badge>
       </div>
       <h3>
         <Link href={`/claims/${version.claimId}`}>{version.originalText}</Link>
       </h3>
       <p>{describePrediction(version.terms)}</p>
+      <Link className="text-link" href={`/claims/${version.claimId}#discussion`}>
+        Discuss this call
+      </Link>
+      <details
+        className="feed-prediction-chart"
+        onToggle={(event) => setShowChart(event.currentTarget.open)}
+      >
+        <summary>View price &amp; prediction chart</summary>
+        {showChart && <ClaimPriceChart claimId={version.claimId} />}
+      </details>
       <div className="live-card-confidence">
         Confidence at commitment:{" "}
         <strong>

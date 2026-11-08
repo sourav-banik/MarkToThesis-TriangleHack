@@ -100,4 +100,36 @@ set local role authenticated;
 select public.commit_claim('77777777-7777-4777-8777-777777777777','Bitcoin position stance',jsonb_set(jsonb_set(test_support.base_terms(),'{instrument}',(select definition from public.instruments where id='crypto:btc:usd')),'{prediction}','{"kind":"hold","meaning":{"kind":"maintain_position"}}'),'private') as bitcoin_hold_id \gset
 select test_support.assert((select initial_status='unscored' from public.claims where id=:'bitcoin_hold_id'), 'Unscored crypto stance does not require a pricing provider');
 reset role;
+-- Resolution writer and blockchain receipts are tested through their real RPCs.
+select set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
+set local role authenticated;
+insert into public.comments(claim_id,author_id,body) values(:'private_id','11111111-1111-4111-8111-111111111111','Private discussion');
+insert into public.comments(claim_id,author_id,body) values(:'public_id','11111111-1111-4111-8111-111111111111','Public evidence');
+select test_support.assert((select count(*)=2 from public.comments), 'Owner can read public and private discussion');
+select test_support.expect_error('update public.comments set body=''rewritten''','42501','Comments cannot rewrite their original content');
+select test_support.expect_error('delete from public.comments','42501','Comments cannot be deleted by clients');
+reset role;
+select set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',true);
+set local role authenticated;
+select test_support.assert((select count(*)=1 from public.comments), 'Private discussion is hidden from other users');
+insert into public.comments(claim_id,author_id,body) values(:'public_id','22222222-2222-4222-8222-222222222222','Reader reply');
+select test_support.assert((select count(*)=2 from public.comments), 'Signed-in readers can join public discussion');
+select test_support.expect_error(format('insert into public.comments(claim_id,author_id,body) values(%L,''22222222-2222-4222-8222-222222222222'',''intrusion'')',:'private_id'),'42501','Readers cannot post to private discussions');
+select test_support.expect_error(format('insert into public.comments(claim_id,author_id,body) values(%L,''11111111-1111-4111-8111-111111111111'',''spoof'')',:'public_id'),'42501','Comment authorship cannot be spoofed');
+reset role;
+select id as anchor_version from public.claim_versions where claim_id=:'amended_id' \gset
+select set_config('request.jwt.claim.role','service_role',true);
+select public.persist_live_resolution(:'anchor_version', jsonb_build_object('id',:'anchor_version','context','{"kind":"live"}'::jsonb,'claimVersionId',:'anchor_version','outcome','met'), '[]'::jsonb);
+select test_support.assert((select count(*)=1 from public.resolutions where claim_version_id=:'anchor_version'), 'Trusted resolution RPC writes the existing schema');
+select public.persist_live_resolution(:'anchor_version', jsonb_build_object('context','{"kind":"live"}'::jsonb,'claimVersionId',:'anchor_version','outcome','not_met'), '[]'::jsonb);
+select test_support.assert((select payload->>'outcome'='met' from public.resolutions where claim_version_id=:'anchor_version'), 'Repeated resolution preserves the original outcome');
+select public.persist_claim_anchor(:'anchor_version','commitment',repeat('a',64),'0x'||repeat('b',64),123,'0x'||repeat('c',64),clock_timestamp());
+select test_support.assert((select count(*)=1 from public.claim_anchors), 'Trusted writer stores blockchain receipt');
+select test_support.expect_error('delete from public.claim_anchors','42501','Blockchain receipts are append-only');
+select set_config('request.jwt.claim.role','',true);
+set local role anon;
+select test_support.assert((select count(*)=1 from public.claim_anchors), 'Public blockchain receipts are readable');
+select test_support.expect_error(format('select public.persist_claim_anchor(%L,''commitment'',repeat(''a'',64),''0x''||repeat(''b'',64),123,''0x''||repeat(''c'',64),clock_timestamp())',:'anchor_version'),'42501','Anonymous callers cannot forge blockchain receipts');
+select test_support.expect_error('insert into public.comments(claim_id,author_id,body) values (gen_random_uuid(),gen_random_uuid(),''fake'')','42501','Anonymous callers cannot post discussion');
+reset role;
 commit;

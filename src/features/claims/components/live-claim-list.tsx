@@ -22,7 +22,14 @@ export function LiveClaimList({ scope = "public", authorHandle, simple = false }
   const [filters, setFilters] = useState(defaultFeedFilters);
   return (
     <div className="live-record-browser">
-      {!simple && <FeedFiltersForm mine={scope === "mine"} onApply={setFilters} />}
+      {simple ? (
+        <details>
+          <summary>Filter history</summary>
+          <FeedFiltersForm mine={scope === "mine"} onApply={setFilters} />
+        </details>
+      ) : (
+        <FeedFiltersForm mine={scope === "mine"} onApply={setFilters} />
+      )}
       <FeedResults
         key={`${scope}:${authorHandle ?? ""}:${JSON.stringify(filters)}`}
         scope={scope}
@@ -41,6 +48,7 @@ function FeedResults({
 }: Props & { filters: FeedFilters }) {
   const [records, setRecords] = useState<FeedRecord[]>([]);
   const [cursor, setCursor] = useState<FeedCursor | null>(null);
+  const hasOlderPage = useRef(false);
   const [summary, setSummary] = useState<RecordSummary | null>(null);
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +95,7 @@ function FeedResults({
             : page.claims,
         );
         setCursor(page.nextCursor);
+        hasOlderPage.current = after !== null;
         if (!after) setSummary(page.summary);
         setConfigured(page.configured);
         setError(null);
@@ -116,10 +125,15 @@ function FeedResults({
       void load();
     };
     window.addEventListener("provenalpha:account-changed", accountChanged);
+    const refresh = () => {
+      if (document.visibilityState === "visible" && !hasOlderPage.current) void load();
+    };
+    const timer = window.setInterval(refresh, 30000);
     return () => {
       active = false;
       pendingRequest.current?.abort();
       window.removeEventListener("provenalpha:account-changed", accountChanged);
+      window.clearInterval(timer);
     };
   }, [load]);
   if (needsSignIn)

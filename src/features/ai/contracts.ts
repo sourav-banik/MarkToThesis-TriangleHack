@@ -11,7 +11,7 @@ export const parseClaimResultSchema = z.object({
 export const evidenceItemSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
-  sourceUrl: z.url(),
+  sourceUrl: z.url({ protocol: /^https?$/ }),
   publisher: z.string().min(1),
   publishedAt: z.iso.datetime({ offset: true }),
   retrievedAt: z.iso.datetime({ offset: true }),

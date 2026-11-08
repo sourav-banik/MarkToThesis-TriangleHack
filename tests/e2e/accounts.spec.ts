@@ -80,7 +80,7 @@ test("live review and retry preserve one submission key without inventing a save
   await expect.poll(() => requests.length).toBe(2);
   expect(requests[1]).toBe(requests[0]);
   const payload = JSON.parse(requests[0]);
-  expect(payload.visibility).toBe("private");
+  expect(payload.visibility).toBe("public");
   expect(payload).not.toHaveProperty("committedAt");
   expect(payload).not.toHaveProperty("authorId");
   expect(payload).not.toHaveProperty("context");

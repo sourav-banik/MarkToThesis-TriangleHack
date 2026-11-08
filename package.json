@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
@@ -13,6 +13,9 @@
     "test:watch": "vitest",
     "test:resolution": "vitest run src/features/resolution",
     "check:claude": "node --conditions=react-server --import tsx scripts/check-claude.ts",
+    "check:claude:complex": "node --conditions=react-server --import tsx scripts/check-complex-claude.ts",
+    "check:mvp": "node --conditions=react-server --import tsx scripts/check-mvp.ts",
+    "check:replay": "node --conditions=react-server --import tsx scripts/check-market-replay.ts",
     "test:database": "node scripts/test-database.mjs",
     "db:seed:generate": "tsx scripts/generate-instrument-seed.ts",
     "test:e2e": "playwright test",

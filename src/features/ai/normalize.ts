@@ -9,8 +9,9 @@ import { liveBindingFor } from "@/features/market-data/live-bindings";
 import { calendarDateAt } from "@/lib/dates";
 import { standardClaimFields as defaultTerms } from "@/features/claims/conventions";
 import { parserResponseSchema, type Extraction, type ParserRequest } from "./parser-contracts";
+import { confidenceMatchesQuote } from "./confidence";
 
-export const PARSER_PROMPT_VERSION = "claim-extraction-v1";
+export const PARSER_PROMPT_VERSION = "claim-extraction-v3";
 export function normalizeExtraction(
   raw: Extraction,
   input: ParserRequest,
@@ -23,7 +24,7 @@ export function normalizeExtraction(
   ];
   const grounded = (quote: string | null) =>
     quote !== null && quote.trim().length > 0 && sources.some((source) => source.includes(quote));
-  function value<K extends Exclude<keyof Extraction, "assumptions" | "ambiguities">>(
+  function value<K extends Exclude<keyof Extraction, "assumptions" | "ambiguities" | "scope">>(
     field: K,
   ): Extraction[K]["value"] {
     return grounded(raw[field].quote) ? raw[field].value : null;
@@ -33,6 +34,16 @@ export function normalizeExtraction(
   function ask(field: DraftClaim["missingFields"][number], question: string) {
     if (!questions.some((item) => item.field === field)) questions.push({ field, question });
   }
+  if (raw.scope === "multiple")
+    ask(
+      "ambiguity",
+      "Your text contains more than one forecast or review window. Which single asset, condition, and horizon should we log first? Save the other forecasts as separate calls.",
+    );
+  if (raw.scope === "conditional")
+    ask(
+      "ambiguity",
+      "Your forecast depends on a trigger. This MVP measures from the first eligible close after logging. Can you restate one unconditional call, or keep the trigger in your reasoning rather than the scoring rule?",
+    );
   function instrumentFrom(field: "instrumentId" | "benchmarkId") {
     const asset = instrumentCatalog.find((item) => item.id === value(field));
     if (!asset) return undefined;
@@ -61,7 +72,7 @@ export function normalizeExtraction(
   if (!instrument)
     ask(
       "instrument",
-      "Which exact instrument and listing or reference series do you mean? Select a supported symbol, for example AAPL, SPY, GLD, US5Y, or WTI.",
+      "Which exact instrument do you mean? Live scoring supports AAPL, MSFT, NVDA, SPY, QQQ, and GLD. Other assets remain available as unscored position statements.",
     );
   if (!kind)
     ask("prediction", "Is this an outperform, underperform, hold, or inclusive range claim?");
@@ -139,19 +150,9 @@ export function normalizeExtraction(
     }
   }
   const confidenceCandidate = value("confidencePct");
-  const confidenceNumbers = (
-    raw.confidencePct.quote.replace(/,/g, "").match(/-?\d+(?:\.\d+)?/g) ?? []
-  ).map(Number);
   const confidence =
     confidenceCandidate !== null &&
-    confidenceNumbers.some(
-      (number) =>
-        number === confidenceCandidate ||
-        (!raw.confidencePct.quote.includes("%") &&
-          number >= 0 &&
-          number <= 1 &&
-          number * 100 === confidenceCandidate),
-    )
+    confidenceMatchesQuote(confidenceCandidate, raw.confidencePct.quote)
       ? confidenceCandidate
       : null;
   const extractedRationale = value("rationale");

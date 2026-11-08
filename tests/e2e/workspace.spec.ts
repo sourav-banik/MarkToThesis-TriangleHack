@@ -5,12 +5,15 @@ test("illustrative feed filters, search, and detail links work", async ({ page }
   page.on("pageerror", (error) => errors.push(error.message));
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/");
-  await expect(page).toHaveTitle("ProvenAlpha — Conviction, with a record");
-  await expect(page.getByRole("link", { name: "ProvenAlpha home", exact: true })).toBeVisible();
+  await expect(page).toHaveTitle("MarkToThesis — Clear market calls");
+  await expect(page.getByRole("link", { name: "MarkToThesis home", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Conviction deserves");
   await expect(
-    page.getByText("Synthetic examples use fabricated prices", { exact: false }),
+    page.getByText("A timestamp shows when a claim was logged here", { exact: false }),
   ).toBeVisible();
+  await page
+    .getByText("Explore a labeled replay or illustrative claim formats", { exact: true })
+    .click();
   await expect(page.locator(".claim-card")).toHaveCount(6);
   await page.screenshot({ path: "test-results/home-desktop.png", fullPage: true });
   await page.getByRole("button", { name: "Underperform", exact: true }).click();
@@ -69,10 +72,8 @@ test("market search, mobile navigation, and the empty profile remain honest", as
   await expect(page.locator(".market-card")).toHaveCount(1);
   await expect(page.locator(".market-card")).toContainText("Provider connection pending");
   await page.getByRole("link", { name: "Your record", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Alex Morgan", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Your live record", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "A clean slate, not an invented track record" }),
+    page.getByRole("heading", { name: "Sign in to build your record", exact: true }),
   ).toBeVisible();
   await page.getByRole("link", { name: "Claim feed", exact: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Conviction deserves");

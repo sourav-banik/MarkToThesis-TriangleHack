@@ -20,6 +20,7 @@ const navigation = [
   { href: "/new", label: "New claim", icon: PenLine },
   { href: "/markets", label: "Markets", icon: Globe2 },
   { href: "/replay", label: "Replay", icon: Play },
+  { href: "/demo", label: "Market demo", icon: Play },
   { href: "/profile", label: "Your record", icon: UserRound },
 ];
 
@@ -105,7 +106,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
         <div className="preview-banner">
-          <span>{pathname.startsWith("/replay") ? "SYNTHETIC REPLAY" : "LIVE CLAIMS ARE PROSPECTIVE"}</span>
+          <span>
+            {pathname.startsWith("/replay") ? "SYNTHETIC REPLAY" : "LIVE CLAIMS ARE PROSPECTIVE"}
+          </span>
           {pathname.startsWith("/replay")
             ? "Fabricated prices. Tab-local confirmation. No public publication or verified historical prediction."
             : "A timestamp shows when a claim was logged here, not when it was first said elsewhere or whether money was invested."}

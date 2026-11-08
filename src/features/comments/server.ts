@@ -5,7 +5,8 @@ import { profileSchema } from "@/features/profiles/contracts";
 import { commentBodySchema, commentSchema, type Comment } from "./contracts";
 
 const commentRowSchema = commentSchema.transform((comment) => comment);
-const commentColumns = "id,claim_id,author_id,body,created_at,author:profiles!comments_author_id_fkey(id,handle,display_name,bio)";
+const commentColumns =
+  "id,claim_id,author_id,body,created_at,author:profiles!comments_author_id_fkey(id,handle,display_name,bio)";
 
 function mapComment(value: unknown) {
   const row = value as Record<string, unknown>;
@@ -24,16 +25,19 @@ function mapComment(value: unknown) {
   });
 }
 
-export async function listClaimComments(client: ServerSupabase, claimId: string): Promise<Comment[]> {
+export async function listClaimComments(
+  client: ServerSupabase,
+  claimId: string,
+): Promise<Comment[]> {
   const { data, error } = await client
     .from("comments")
     .select(commentColumns)
     .eq("claim_id", claimId)
-    .order("created_at", { ascending: true })
-    .order("id", { ascending: true })
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
     .limit(100);
   if (error) throw new HttpError(503, "Comments are temporarily unavailable.");
-  return (data ?? []).map(mapComment);
+  return (data ?? []).map(mapComment).reverse();
 }
 
 export async function createClaimComment(
@@ -50,7 +54,8 @@ export async function createClaimComment(
     .single();
   if (error) {
     if (error.code === "42501") throw new HttpError(403, "You cannot comment on this claim.");
-    if (error.code?.startsWith("22")) throw new HttpError(400, "Keep comments between 1 and 2,000 characters.");
+    if (error.code?.startsWith("22"))
+      throw new HttpError(400, "Keep comments between 1 and 2,000 characters.");
     throw new HttpError(503, "The comment could not be saved.");
   }
   return mapComment(data);

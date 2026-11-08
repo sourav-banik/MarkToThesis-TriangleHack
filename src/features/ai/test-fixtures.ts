@@ -16,6 +16,7 @@ export function emptyExtraction(): Extraction {
     "rationale",
   ];
   return extractionSchema.parse({
+    scope: "single",
     ...Object.fromEntries(fields.map((key) => [key, { value: null, quote: "" }])),
     assumptions: [],
     ambiguities: [],

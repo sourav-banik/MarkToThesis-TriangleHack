@@ -65,57 +65,65 @@ export default function FeedPage() {
         <div className="section-heading">
           <div>
             <span className="eyebrow">PROSPECTIVE CLAIMS · DATABASE RECORDS</span>
-            <h2 id="live-feed-title">Public live calls</h2>
+            <h2 id="live-feed-title">Public calls and discussion</h2>
           </div>
         </div>
         <LiveClaimList />
       </section>
-      <ReplayFeed />
-      <div className="content-with-aside">
-        <ExampleFeed examples={claimExamples} />
-        <aside className="context-aside">
-          <div className="aside-card">
-            <span className="eyebrow">FROM A VIEW TO A CLAIM</span>
-            <h2>
-              A little precision.
-              <br />A lot more context.
-            </h2>
-            <ol className="workflow-list">
-              <li>
-                <span>01</span>
-                <div>
-                  <strong>Say what you expect</strong>
-                  <p>An asset, an outcome, a horizon.</p>
-                </div>
-              </li>
-              <li>
-                <span>02</span>
-                <div>
-                  <strong>Agree on the test</strong>
-                  <p>Benchmarks, ranges, and clear units.</p>
-                </div>
-              </li>
-              <li>
-                <span>03</span>
-                <div>
-                  <strong>Keep the full picture</strong>
-                  <p>The original call and its evidence.</p>
-                </div>
-              </li>
-            </ol>
-            <Link href="/new" className="text-link">
-              Explore a claim <ArrowRight size={15} aria-hidden="true" />
-            </Link>
-          </div>
-          <div className="aside-footnote">
-            <span className="eyebrow">A NOTE ON TRUST</span>
-            <p>
-              A timestamp records when a claim enters MarkToThesis. It does not verify a trade or an
-              earlier prediction elsewhere.
-            </p>
-          </div>
-        </aside>
-      </div>
+      <p className="inline-note">
+        <Link className="text-link" href="/demo">
+          Run the complete AI + historical market-data demo
+        </Link>
+      </p>
+      <details className="detail-panel replay-reasoning">
+        <summary>Explore a labeled replay or illustrative claim formats</summary>
+        <ReplayFeed />
+        <div className="content-with-aside">
+          <ExampleFeed examples={claimExamples} />
+          <aside className="context-aside">
+            <div className="aside-card">
+              <span className="eyebrow">FROM A VIEW TO A CLAIM</span>
+              <h2>
+                A little precision.
+                <br />A lot more context.
+              </h2>
+              <ol className="workflow-list">
+                <li>
+                  <span>01</span>
+                  <div>
+                    <strong>Say what you expect</strong>
+                    <p>An asset, an outcome, a horizon.</p>
+                  </div>
+                </li>
+                <li>
+                  <span>02</span>
+                  <div>
+                    <strong>Agree on the test</strong>
+                    <p>Benchmarks, ranges, and clear units.</p>
+                  </div>
+                </li>
+                <li>
+                  <span>03</span>
+                  <div>
+                    <strong>Keep the full picture</strong>
+                    <p>The original call and its evidence.</p>
+                  </div>
+                </li>
+              </ol>
+              <Link href="/new" className="text-link">
+                Explore a claim <ArrowRight size={15} aria-hidden="true" />
+              </Link>
+            </div>
+            <div className="aside-footnote">
+              <span className="eyebrow">A NOTE ON TRUST</span>
+              <p>
+                A timestamp records when a claim enters MarkToThesis. It does not verify a trade or
+                an earlier prediction elsewhere.
+              </p>
+            </div>
+          </aside>
+        </div>
+      </details>
     </div>
   );
 }

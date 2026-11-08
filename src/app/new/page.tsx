@@ -17,11 +17,11 @@ export default function NewClaimPage() {
       </div>
       <div className="inline-note replay-entry-note">
         <p>
-          <strong>Want to see the complete loop?</strong> Confirm a synthetic replay, calculate its
-          outcome, and inspect the demo author’s history.
+          <strong>Want to see the complete loop?</strong> Clarify a call with Claude and resolve a
+          clearly labeled historical replay using Massive prices.
         </p>
-        <Link href="/replay" className="text-link">
-          Open synthetic replay <ArrowUpRight size={15} aria-hidden="true" />
+        <Link href="/demo" className="text-link">
+          Open historical market demo <ArrowUpRight size={15} aria-hidden="true" />
         </Link>
       </div>
       <LiveClaimComposer />

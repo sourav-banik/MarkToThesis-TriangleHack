@@ -30,7 +30,13 @@ function SnapshotRows({ snapshots, label }: { snapshots: PriceSnapshot[]; label:
   ));
 }
 
-export function ReplayResult({ attempt }: { attempt: ResolutionAttempt }) {
+export function ReplayResult({
+  attempt,
+  marketData = false,
+}: {
+  attempt: ResolutionAttempt;
+  marketData?: boolean;
+}) {
   if (attempt.status === "invalid_input")
     return (
       <section className="detail-panel result-panel" aria-labelledby="result-title">
@@ -89,8 +95,10 @@ export function ReplayResult({ attempt }: { attempt: ResolutionAttempt }) {
         <div className="result-caveat">
           <Info size={16} aria-hidden="true" />
           <span>
-            This fixed synthetic dataset covers {REPLAY_COVERAGE} only. Missing observations stay
-            missing; a later price cannot replace the saved test.
+            {marketData
+              ? "The selected historical market window has incomplete observations."
+              : `This fixed synthetic dataset covers ${REPLAY_COVERAGE} only.`}{" "}
+            Missing observations stay missing; a later price cannot replace the saved test.
           </span>
         </div>
       </section>
@@ -203,8 +211,12 @@ export function ReplayResult({ attempt }: { attempt: ResolutionAttempt }) {
         </Badge>
       </div>
       <p className="result-intro">
-        Measured from the selected start to the selected review observation. These are fabricated
-        values, not historical performance.
+        Measured from the selected start to the selected review observation.{" "}
+        {marketData
+          ? resolution.context.kind === "replay"
+            ? "Historical Massive prices are used in a replay entered now; this is not a prospective track record."
+            : "Saved Massive observations reproduce this logged claim's result."
+          : "These are fabricated values, not historical performance."}
       </p>
       <div className="result-metrics">
         {metricCards.map((metric) => (
@@ -348,8 +360,10 @@ export function ReplayResult({ attempt }: { attempt: ResolutionAttempt }) {
           <div>
             <dt>Source</dt>
             <dd>
-              {inputs.assetStart.source.provider} · fabricated synthetic data. No market-data API
-              was queried.
+              {inputs.assetStart.source.provider} ·{" "}
+              {inputs.assetStart.source.isSynthetic
+                ? "fabricated synthetic data. No market-data API was queried."
+                : "historical market observations retrieved from Massive."}
             </dd>
           </div>
           <div>

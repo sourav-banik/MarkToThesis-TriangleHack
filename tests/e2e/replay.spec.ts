@@ -14,6 +14,9 @@ test("complete replay preserves terms, results, history, reloads, and legacy tab
   page.on("pageerror", (error) => errors.push(error.message));
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/");
+  await page
+    .getByText("Explore a labeled replay or illustrative claim formats", { exact: true })
+    .click();
   await page.getByRole("link", { name: "Start replay", exact: true }).click();
   await expect(
     page.getByText("Synthetic replay · fabricated prices", { exact: true }),
@@ -195,7 +198,7 @@ test("invalid stored metadata restores the full synthetic history", async ({ pag
       JSON.stringify({ version: 1, records: [{ invalid: true }] }),
     ),
   );
-  await page.goto("/profile");
+  await page.goto("/profile?record=demo");
   await expect(page.getByRole("status")).toContainText("synthetic examples have been restored");
   await expect(page.locator(".replay-record-card")).toHaveCount(7);
   await expect(

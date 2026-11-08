@@ -1,8 +1,10 @@
-# ProvenAlpha
+# MarkToThesis
 
 An AI-powered platform for making clear market claims and building a transparent record of their outcomes.
 
-## Current increment: Part 10
+## Current increment: MVP hardening and Base Sepolia history proofs
+
+Start with [MVP acceptance and setup](docs/mvp-acceptance.md). This audit adds robust complex-call clarification, an active claim-discussion feed, a real-price historical walkthrough at `/demo`, and independently checked Base Sepolia hash receipts. Apply migration `202611080006_mvp_integrity.sql` after migrations 001–005 before anchoring records. Anchoring requires an author's wallet confirmation and test ETH; records are never labeled confirmed solely because a transaction was submitted.
 
 This repository contains the Next.js foundation, shared domain contracts, a deterministic resolution engine, a tab-local synthetic replay, Supabase authentication and persistent commitment, public/owner records, Claude-powered claim parsing, and a Massive-backed live resolver. The preview runs without API keys; Supabase enables live accounts, an Anthropic API key enables authenticated AI clarification, and Massive enables live stock/ETF observations.
 
@@ -26,7 +28,7 @@ Included:
 - Claim-level discussion with immutable comments, visibility-aware RLS, and no effect on claim terms or scores.
 - Simplified live demo: account entry, Claude-assisted submission, a saved-outcome scorecard, and Massive relative-price charts.
 
-Follow [the connection and persistence guide](docs/persistence.md) to configure Supabase, [the Claude parser guide](docs/claude-parser.md) to enable AI clarification, and [the reasoning review guide](docs/reasoning-review.md) for evidence review. Missing keys produce honest setup states and manual entry remains available. Claim-level comments remain deferred. Measurable live commitments await their starting observations; position-only holds are unscored. Selected instruments have fixed source bindings; other measurable live forecasts remain blocked until their exact provider/fixing is defined.
+Follow [the connection and persistence guide](docs/persistence.md) to configure Supabase, [the Claude parser guide](docs/claude-parser.md) to enable AI clarification, and [the reasoning review guide](docs/reasoning-review.md) for evidence review. Missing keys produce setup states and manual entry remains available. Claim-level comments refresh automatically. Measurable live commitments await their starting observations; position-only holds are unscored. Supported stocks and ETFs use Massive; other measurable live forecasts remain blocked until their exact provider/fixing is implemented.
 
 Replay confirmation uses the browser clock and `sessionStorage`, not a server timestamp or immutable database record. All replay prices and prior outcomes are fabricated examples. Replay records remain separate from real accounts and live tables.
 
@@ -103,21 +105,21 @@ If a compatible Chrome or Edge is already installed, set `PLAYWRIGHT_CHANNEL=chr
 
 ## Modules
 
-| Location                   | Responsibility                                                                              |
-| -------------------------- | ------------------------------------------------------------------------------------------- |
-| `src/app`                  | Thin routes, layouts, global styles, route states                                           |
-| `src/components`           | Shared UI and navigation                                                                    |
-| `src/features/claims`      | Claim contracts, workbench, live commitment service, and record presentation                |
-| `src/features/auth`        | Account contracts, verified sessions, and account UI                                        |
-| `src/features/market-data` | Instrument catalog, observation contracts, adapter boundary                                 |
-| `src/features/resolution`  | Calendar selection, exact arithmetic, data validation, and deterministic resolution         |
-| `src/features/replay`      | Versioned synthetic dataset, validated tab store, confirmation, results, and history        |
-| `src/features/ai`          | Claude adapter, grounded proposal validation, clarification UI, and evidence reviews          |
-| `src/features/comments`    | Claim-level comment contracts, visibility-aware reads, and authenticated writes               |
-| `src/features/feed`        | Scoped live queries, filters, cursor pagination, summaries, and example feed                |
-| `src/features/profiles`    | Safe author lookup, owner profile header, and record summaries                              |
-| `src/lib/server`           | Server-only configuration, Supabase clients, and HTTP boundaries                            |
-| `supabase`                 | Database migrations and SQL policy/commitment tests                                         |
-| `src/demo`                 | Clearly labeled claim examples and fabricated resolution fixtures                           |
+| Location                   | Responsibility                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------ |
+| `src/app`                  | Thin routes, layouts, global styles, route states                                    |
+| `src/components`           | Shared UI and navigation                                                             |
+| `src/features/claims`      | Claim contracts, workbench, live commitment service, and record presentation         |
+| `src/features/auth`        | Account contracts, verified sessions, and account UI                                 |
+| `src/features/market-data` | Instrument catalog, observation contracts, adapter boundary                          |
+| `src/features/resolution`  | Calendar selection, exact arithmetic, data validation, and deterministic resolution  |
+| `src/features/replay`      | Versioned synthetic dataset, validated tab store, confirmation, results, and history |
+| `src/features/ai`          | Claude adapter, grounded proposal validation, clarification UI, and evidence reviews |
+| `src/features/comments`    | Claim-level comment contracts, visibility-aware reads, and authenticated writes      |
+| `src/features/feed`        | Scoped live queries, filters, cursor pagination, summaries, and example feed         |
+| `src/features/profiles`    | Safe author lookup, owner profile header, and record summaries                       |
+| `src/lib/server`           | Server-only configuration, Supabase clients, and HTTP boundaries                     |
+| `supabase`                 | Database migrations and SQL policy/commitment tests                                  |
+| `src/demo`                 | Clearly labeled claim examples and fabricated resolution fixtures                    |
 
 Read [the domain rules and module boundaries](docs/architecture.md) before adding services. Parts 4–6 connect persistent commitment, records, and Claude clarification. Live price resolution remains a separate increment. Keep browser-only replay records out of prospective public statistics.

@@ -8,8 +8,20 @@ import { ResolveClaimButton } from "./resolve-claim-button";
 import { ReasoningReviewPanel } from "./reasoning-review-panel";
 import { ClaimComments } from "./claim-comments";
 import { ClaimPriceChart } from "./claim-price-chart";
+import { ClaimProof } from "@/features/integrity/components/claim-proof";
+import { ReplayResult } from "@/features/replay/components/replay-result";
 
-export function LiveClaimDetail({ claim, author, canManage = false, canComment = false }: { claim: PersistedClaim; author: Profile; canManage?: boolean; canComment?: boolean }) {
+export function LiveClaimDetail({
+  claim,
+  author,
+  canManage = false,
+  canComment = false,
+}: {
+  claim: PersistedClaim;
+  author: Profile;
+  canManage?: boolean;
+  canComment?: boolean;
+}) {
   const { version } = claim;
   const time = new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
@@ -42,8 +54,18 @@ export function LiveClaimDetail({ claim, author, canManage = false, canComment =
         <section className="detail-panel locked-claim">
           <div className="section-heading">
             <span className="eyebrow">VERSION {version.version} · LOCKED TERMS</span>
-            <Badge tone={claim.status === "unscored" || claim.status === "not_met" ? "muted" : "purple"}>
-              {claim.status === "unscored" ? "Unscored" : claim.status === "met" ? "Met" : claim.status === "not_met" ? "Not met" : claim.status === "unclear" ? "Unclear" : "Awaiting data"}
+            <Badge
+              tone={claim.status === "unscored" || claim.status === "not_met" ? "muted" : "purple"}
+            >
+              {claim.status === "unscored"
+                ? "Unscored"
+                : claim.status === "met"
+                  ? "Met"
+                  : claim.status === "not_met"
+                    ? "Not met"
+                    : claim.status === "unclear"
+                      ? "Unclear"
+                      : "Awaiting data"}
             </Badge>
           </div>
           <blockquote className="original-call">{version.originalText}</blockquote>
@@ -96,19 +118,10 @@ export function LiveClaimDetail({ claim, author, canManage = false, canComment =
             </div>
           </dl>
           {claim.resolution ? (
-            <section className="aside-card" aria-label="Live resolution result">
-              <span className="eyebrow">MASSIVE LIVE RESOLUTION</span>
-              <h2>{claim.resolution.outcome === "met" ? "Met" : claim.resolution.outcome === "not_met" ? "Not met" : claim.resolution.outcome === "unscored" ? "Unscored" : "Unclear"}</h2>
-              {"measurement" in claim.resolution && claim.resolution.measurement.kind === "price_return" && (
-                <p>
-                  Asset {claim.resolution.measurement.assetReturnPct.toFixed(2)}%
-                  {claim.resolution.measurement.benchmarkReturnPct === null ? "" : ` vs benchmark ${claim.resolution.measurement.benchmarkReturnPct.toFixed(2)}%`}
-                  {claim.resolution.measurement.excessReturnPp === null ? "" : ` · excess ${claim.resolution.measurement.excessReturnPp.toFixed(2)} pp`}
-                </p>
-              )}
-              {claim.resolution.outcome === "unclear" && <p>{claim.resolution.reason}</p>}
-              <small>Price performance excludes dividends; Massive split-adjusted bars are used.</small>
-            </section>
+            <ReplayResult
+              attempt={{ status: claim.resolution.outcome, resolution: claim.resolution }}
+              marketData
+            />
           ) : canManage ? (
             <ResolveClaimButton claimId={version.claimId} />
           ) : null}
@@ -140,6 +153,9 @@ export function LiveClaimDetail({ claim, author, canManage = false, canComment =
         </aside>
       </div>
       <ClaimPriceChart claimId={version.claimId} />
+      {version.visibility === "public" && (
+        <ClaimProof claimId={version.claimId} canManage={canManage} />
+      )}
       <section className="detail-panel replay-reasoning">
         <span className="eyebrow">REASONING, SEPARATE FROM SCORING</span>
         <h2>The stated rationale</h2>
