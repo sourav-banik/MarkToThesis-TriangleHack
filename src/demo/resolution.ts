@@ -64,7 +64,7 @@ export function syntheticSeries(
       observedAt: session.observedAt,
       availableAt: session.expectedAvailableAt,
       retrievedAt: `${session.sessionDate}T21:10:00Z`,
-      source: { ...source, sourceUrl: "https://example.com/marktothesis/synthetic-fixture" },
+      source: { ...source, sourceUrl: "https://example.com/provenalpha/synthetic-fixture" },
       adjustment:
         instrument.quote.kind === "yield"
           ? "not_applicable"

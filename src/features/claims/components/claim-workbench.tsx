@@ -6,27 +6,66 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { defaultTerms } from "@/demo/claims";
 import { instrumentCatalog, instruments } from "@/features/market-data/catalog";
-import { commitmentTermsSchema, type Prediction } from "../contracts";
+import { commitmentTermsSchema, type ConfirmedTerms, type Prediction } from "../contracts";
 import { predictionLabels } from "../presentation";
 import { ClaimSummary } from "./claim-summary";
 
 const kinds = ["outperform", "underperform", "hold", "range"] as const;
 const numberValue = (value: string) => (value.trim() === "" ? Number.NaN : Number(value));
 
-export function ClaimWorkbench() {
-  const [kind, setKind] = useState<Prediction["kind"]>("outperform");
-  const [instrumentId, setInstrumentId] = useState(instruments.aapl.id);
-  const [benchmarkId, setBenchmarkId] = useState(instruments.spy.id);
-  const [holdMeaning, setHoldMeaning] = useState("neutral");
-  const [horizonMode, setHorizonMode] = useState("duration");
-  const [duration, setDuration] = useState("3");
-  const [unit, setUnit] = useState("months");
-  const [targetDate, setTargetDate] = useState("");
-  const [lower, setLower] = useState("100");
-  const [upper, setUpper] = useState("200");
-  const [tolerance, setTolerance] = useState("5");
-  const [evaluation, setEvaluation] = useState("at_review");
-  const [confidence, setConfidence] = useState("");
+export function ClaimWorkbench({
+  initialTerms,
+  onReview,
+  purpose = "replay",
+}: {
+  initialTerms?: ConfirmedTerms;
+  onReview?: (terms: ConfirmedTerms) => void;
+  purpose?: "replay" | "live";
+}) {
+  const initialPrediction = initialTerms?.prediction;
+  const [kind, setKind] = useState<Prediction["kind"]>(initialPrediction?.kind ?? "outperform");
+  const [instrumentId, setInstrumentId] = useState(
+    initialTerms?.instrument.id ?? instruments.aapl.id,
+  );
+  const [benchmarkId, setBenchmarkId] = useState(
+    initialPrediction?.kind === "outperform" || initialPrediction?.kind === "underperform"
+      ? initialPrediction.benchmark.id
+      : instruments.spy.id,
+  );
+  const [holdMeaning, setHoldMeaning] = useState<string>(
+    initialPrediction?.kind === "hold" ? initialPrediction.meaning.kind : "neutral",
+  );
+  const [horizonMode, setHorizonMode] = useState<string>(initialTerms?.horizon.kind ?? "duration");
+  const [duration, setDuration] = useState(
+    initialTerms?.horizon.kind === "duration" ? String(initialTerms.horizon.value) : "3",
+  );
+  const [unit, setUnit] = useState<string>(
+    initialTerms?.horizon.kind === "duration" ? initialTerms.horizon.unit : "months",
+  );
+  const [targetDate, setTargetDate] = useState(
+    initialTerms?.horizon.kind === "date" ? initialTerms.horizon.targetDate : "",
+  );
+  const [lower, setLower] = useState(
+    initialPrediction?.kind === "range" ? String(initialPrediction.lower) : "100",
+  );
+  const [upper, setUpper] = useState(
+    initialPrediction?.kind === "range" ? String(initialPrediction.upper) : "200",
+  );
+  const [tolerance, setTolerance] = useState(
+    initialPrediction?.kind === "hold" && initialPrediction.meaning.kind === "neutral"
+      ? String(initialPrediction.meaning.tolerance)
+      : "5",
+  );
+  const [evaluation, setEvaluation] = useState<string>(
+    initialPrediction?.kind === "range"
+      ? initialPrediction.evaluation
+      : initialPrediction?.kind === "hold" && initialPrediction.meaning.kind === "neutral"
+        ? initialPrediction.meaning.evaluation
+        : "at_review",
+  );
+  const [confidence, setConfidence] = useState(
+    initialTerms?.confidencePct == null ? "" : String(initialTerms.confidencePct),
+  );
   const [checked, setChecked] = useState(false);
   const instrument = instrumentCatalog.find((item) => item.id === instrumentId)!;
   const benchmark = instrumentCatalog.find((item) => item.id === benchmarkId);
@@ -94,6 +133,7 @@ export function ClaimWorkbench() {
         onSubmit={(event) => {
           event.preventDefault();
           setChecked(true);
+          if (result.success) onReview?.(result.data);
         }}
         onChange={() => setChecked(false)}
         noValidate
@@ -191,7 +231,7 @@ export function ClaimWorkbench() {
               </div>
             ) : (
               <p className="field-help">
-                A position statement has no market-performance outcome. MarkToThesis does not verify
+                A position statement has no market-performance outcome. ProvenAlpha does not verify
                 that a position exists.
               </p>
             )}
@@ -317,9 +357,20 @@ export function ClaimWorkbench() {
         </div>
         <div className="form-actions">
           <Button type="submit">
-            Check the format <ArrowRight size={16} aria-hidden="true" />
+            {onReview
+              ? purpose === "live"
+                ? "Review live claim"
+                : "Review replay terms"
+              : "Check the format"}{" "}
+            <ArrowRight size={16} aria-hidden="true" />
           </Button>
-          <span>Preview only. Nothing is saved.</span>
+          <span>
+            {onReview
+              ? purpose === "live"
+                ? "Review before saving. The database supplies the timestamp."
+                : "Review before locking. No public post is created."
+              : "Preview only. Nothing is saved."}
+          </span>
         </div>
         {checked && (
           <div
@@ -369,8 +420,11 @@ export function ClaimWorkbench() {
           <LockKeyhole size={20} className="purple-text" aria-hidden="true" />
           <h3>A preview is not a commitment.</h3>
           <p>
-            Publishing will lock the original wording, measurement rules, and server timestamp. That
-            workflow comes in a later increment.
+            {onReview
+              ? purpose === "live"
+                ? "Review original wording, terms, and visibility before saving. Committed calls cannot be overwritten or hidden; a changed forecast creates a separate linked claim."
+                : "Review the original wording and exact terms before locking a tab-local replay. Its browser confirmation time is separate from the simulated market dates."
+              : "Publishing will lock the original wording, measurement rules, and server timestamp. That workflow comes in a later increment."}
           </p>
         </div>
         <div className="aside-footnote">

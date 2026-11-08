@@ -1,5 +1,5 @@
 {
-  "name": "marktothesis",
+  "name": "provenalpha",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -12,12 +12,16 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:resolution": "vitest run src/features/resolution",
+    "test:database": "node scripts/test-database.mjs",
+    "db:seed:generate": "tsx scripts/generate-instrument-seed.ts",
     "test:e2e": "playwright test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "npm run lint && npm run typecheck && npm test"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.119.0",
     "@tailwindcss/postcss": "^4.3.5",
     "lucide-react": "^0.468.0",
     "next": "16.4.5",
@@ -40,6 +44,7 @@
     "eslint": "^9.0.0",
     "eslint-config-next": "16.4.5",
     "prettier": "^3.9.10",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.0",
     "vitest": "^5.1.0"
   }

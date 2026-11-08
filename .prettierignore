@@ -4,3 +4,4 @@ package-lock.json
 next-env.d.ts
 test-results/
 playwright-report/
+.local-db-tests/

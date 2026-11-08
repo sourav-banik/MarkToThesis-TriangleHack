@@ -1,4 +1,4 @@
-# Application architecture: Parts 1 and 2
+# Application architecture: Parts 1–4
 
 ## Boundaries
 
@@ -8,10 +8,11 @@ This is one modular Next.js application. Route files render feature components; 
 - Market data owns precise instrument identities and normalized observations.
 - Resolution consumes committed terms, independent schedules, and observations. The pure Part 2 engine determines outcomes; AI must not determine them. See [resolution rules](resolution.md).
 - AI proposes a draft or reviews supplied evidence. Its explanation is separate from a numerical resolution.
-- Feed and profiles display records. The sample feed currently displays unsaved examples, not committed claims.
+- Feed and profiles display records. Public database-backed calls are separate from format examples and synthetic replay history. Public feed/profile queries always use an anonymous database client.
+- Replay owns the synthetic UI dataset and tab-local state. Its result component consumes the existing resolver output rather than calculating returns or hard-coding wins. See [replay integration](replay.md).
 - Provider clients and secrets belong behind `src/lib/server` or server-only feature services. Client components may import pure contracts and presentation helpers.
 
-Add auth services and database migrations when implementing persistent commitment. Do not add empty service wrappers, fake authentication, or simulated publishing now.
+Part 4 adds verified account services, per-request Supabase clients, and database migrations. Their connection is prepared for later; missing configuration produces an explicit setup state rather than simulated sign-in or publishing. See [accounts and live commitment](persistence.md).
 
 ## Claim kinds
 
@@ -65,9 +66,11 @@ The shared lifecycle is awaiting start, active, awaiting data, met, not met, unc
 
 Committed versions preserve original text, confirmed terms, author, actual server logging timestamp, publication timestamp, visibility, and context. Live and replay contexts are distinct. A replay has a separate simulated historical commitment timestamp and dataset ID; it must not backdate the actual logging timestamp.
 
-Server services and database policies will enforce atomic creation, ownership, idempotency, and append-only records in the persistence increment. A TypeScript readonly type or schema validation alone does not enforce database immutability. Changed forecast terms must create a new linked claim without replacing the original scored call; version links are for retained provenance, not score resets.
+Server services and database policies enforce atomic creation, ownership, idempotency, and append-only records. A TypeScript readonly type or schema validation alone does not enforce database immutability. Changed forecast terms must create a new linked claim without replacing the original scored call; version links retain provenance. Visibility is fixed at commitment. The RPC supports owned predecessor links; a dedicated amendment UI is deferred.
 
 Prospective public statistics must exclude replays, private claims, late-publicized calls, and position-only holds. Public visibility and withdrawal rules must prevent selectively hiding misses. Profiles will need explicit sample sizes and pending/unclear counts. None of these statistics are fabricated in the current UI.
+
+Part 3 adds a separate fictional-author history containing synthetic outcomes. These are explicitly labeled and do not enter a live record. Browser-confirmed copies use the domain version structure with `visibility: private`, `publishedAt: null`, and a replay context. Their timestamp is browser-supplied and clearly presented as such. Part 4 live commitments use the database clock and force live context; no replay conversion endpoint exists. The `sessionStorage` copy is editable by its browser owner and must never be imported as a verified public commitment.
 
 ## Evidence and AI
 
@@ -77,7 +80,7 @@ AI reviews are not causal proof of a price movement. There is no market-performa
 
 ## Next increment
 
-Part 2 is implemented and checked against fabricated observations. Part 3 will connect the replay interface to these results and show the full calculation trail. Keep replay and synthetic labels visible. Do not present fixtures as actual historical prices, enable real publishing, or ask AI to decide outcomes.
+Part 4 prepares authentication, database protections, atomic server-side commitment, and basic live record views. Next, connect and verify the actual Supabase project, then deepen live feed/profile behavior within the agreed modular build sequence. AI parsing and market-provider/resolution integration remain separate increments. Synthetic replay records stay separate from real claims.
 
 ## Dependency maintenance
 

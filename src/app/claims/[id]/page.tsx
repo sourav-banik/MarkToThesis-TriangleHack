@@ -6,8 +6,14 @@ import { claimExamples } from "@/demo/claims";
 import { ClaimSummary } from "@/features/claims/components/claim-summary";
 import { Badge } from "@/components/ui/badge";
 import { buttonClass } from "@/components/ui/button";
+import { z } from "zod";
+import { createVerifiedReadClient } from "@/lib/server/supabase";
+import { getLiveClaim } from "@/features/claims/server";
+import { LiveClaimDetail } from "@/features/claims/components/live-claim-detail";
+import { EmptyState } from "@/components/ui/empty-state";
+import { HttpError } from "@/lib/server/http";
 
-export const metadata: Metadata = { title: "Inspect a claim format" };
+export const metadata: Metadata = { title: "Inspect a claim" };
 
 export function generateStaticParams() {
   return claimExamples.map((example) => ({ id: example.id }));
@@ -15,6 +21,35 @@ export function generateStaticParams() {
 
 export default async function ClaimExamplePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  if (z.uuid().safeParse(id).success) {
+    const client = await createVerifiedReadClient();
+    if (!client)
+      return (
+        <div className="page-container">
+          <EmptyState title="Live claims are not connected in this preview">
+            <p>
+              Open{" "}
+              <Link href="/account" className="text-link">
+                account setup
+              </Link>{" "}
+              or explore a synthetic replay.
+            </p>
+          </EmptyState>
+        </div>
+      );
+    let record: Awaited<ReturnType<typeof getLiveClaim>>;
+    try {
+      record = await getLiveClaim(client, id);
+    } catch (error) {
+      if (error instanceof HttpError && error.status === 404) notFound();
+      throw error;
+    }
+    return (
+      <div className="page-container">
+        <LiveClaimDetail {...record} />
+      </div>
+    );
+  }
   const example = claimExamples.find((item) => item.id === id);
   if (!example) notFound();
   const { terms } = example;

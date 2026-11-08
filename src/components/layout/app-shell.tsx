@@ -8,15 +8,18 @@ import {
   Compass,
   Globe2,
   PenLine,
+  Play,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { AccountLink } from "@/features/auth/components/account-link";
 
 const navigation = [
   { href: "/", label: "Claim feed", icon: Compass },
   { href: "/new", label: "New claim", icon: PenLine },
   { href: "/markets", label: "Markets", icon: Globe2 },
+  { href: "/replay", label: "Replay", icon: Play },
   { href: "/profile", label: "Your record", icon: UserRound },
 ];
 
@@ -28,23 +31,25 @@ export function AppShell({ children }: { children: ReactNode }) {
       ? "Explore the universe"
       : pathname.startsWith("/profile")
         ? "A record, over time"
-        : pathname.startsWith("/claims/")
-          ? "Behind the claim"
-          : "The public record";
+        : pathname.startsWith("/replay")
+          ? "A call, measured in replay"
+          : pathname.startsWith("/claims/")
+            ? "Behind the claim"
+            : "The public record";
   return (
     <div className="app-shell">
       <a href="#main-content" className="skip-link">
         Skip to content
       </a>
       <aside className="sidebar">
-        <Link href="/" className="brand" aria-label="MarkToThesis home">
+        <Link href="/" className="brand" aria-label="ProvenAlpha home">
           <span className="brand-mark" aria-hidden="true">
             <span />
             <span />
             <span />
           </span>
           <span>
-            MarkTo<span className="brand-light">Thesis</span>
+            Proven<span className="brand-light">Alpha</span>
             <small>CONVICTION. ACCOUNTABILITY.</small>
           </span>
         </Link>
@@ -92,22 +97,25 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="topbar-title">{title}</span>
           <div className="topbar-actions">
             <span className="preview-dot" />
-            Preview workspace
+            Workspace
             <Link href="/new" className="topbar-link">
               Explore a claim <ArrowUpRight size={15} aria-hidden="true" />
             </Link>
+            <AccountLink />
           </div>
         </header>
         <div className="preview-banner">
-          <span>ILLUSTRATIVE DATA</span> Explore the formats. These examples are not published calls
-          or a performance record.
+          <span>{pathname.startsWith("/replay") ? "SYNTHETIC REPLAY" : "ILLUSTRATIVE DATA"}</span>
+          {pathname.startsWith("/replay")
+            ? "Fabricated prices. Tab-local confirmation. No public publication or verified historical prediction."
+            : "Synthetic examples use fabricated prices and do not enter a live performance record. Live claims are marked separately."}
         </div>
         <main id="main-content" tabIndex={-1}>
           {children}
         </main>
         <footer className="app-footer">
           <span>
-            MarkToThesis <span className="footer-divider">/</span> Every call has a context.
+            ProvenAlpha <span className="footer-divider">/</span> Every call has a context.
           </span>
           <span>Claims are not verified trades.</span>
         </footer>

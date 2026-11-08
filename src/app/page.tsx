@@ -3,6 +3,8 @@ import { ArrowRight, ArrowUpRight, Check, FileCheck2, Fingerprint, Scale } from 
 import { buttonClass } from "@/components/ui/button";
 import { claimExamples } from "@/demo/claims";
 import { ExampleFeed } from "@/features/feed/components/example-feed";
+import { ReplayFeed } from "@/features/replay/components/replay-feed";
+import { LiveClaimList } from "@/features/claims/components/live-claim-list";
 
 export default function FeedPage() {
   return (
@@ -59,6 +61,16 @@ export default function FeedPage() {
           <strong>Code measures.</strong> AI explains.
         </span>
       </div>
+      <section className="live-feed" aria-labelledby="live-feed-title">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">PROSPECTIVE CLAIMS · DATABASE RECORDS</span>
+            <h2 id="live-feed-title">Public live calls</h2>
+          </div>
+        </div>
+        <LiveClaimList />
+      </section>
+      <ReplayFeed />
       <div className="content-with-aside">
         <ExampleFeed examples={claimExamples} />
         <aside className="context-aside">
@@ -98,7 +110,7 @@ export default function FeedPage() {
           <div className="aside-footnote">
             <span className="eyebrow">A NOTE ON TRUST</span>
             <p>
-              A timestamp records when a claim enters MarkToThesis. It does not verify a trade or an
+              A timestamp records when a claim enters ProvenAlpha. It does not verify a trade or an
               earlier prediction elsewhere.
             </p>
           </div>
