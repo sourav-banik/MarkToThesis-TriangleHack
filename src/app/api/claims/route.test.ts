@@ -117,7 +117,7 @@ describe("claim HTTP boundary", () => {
       profile: null,
     } as unknown as Awaited<ReturnType<typeof requireAccount>>);
     vi.mocked(listClaimFeed).mockResolvedValue({ claims: [], nextCursor: null });
-    vi.mocked(getRecordSummary).mockResolvedValue({ awaitingStart: 37, unscored: 5 });
+    vi.mocked(getRecordSummary).mockResolvedValue({ total: 42, scored: 24, met: 15, notMet: 9, pending: 12, unclear: 1, unscored: 5 });
     const response = await GET(
       new Request(
         "http://localhost:3000/api/claims?scope=mine&ownerId=attacker-choice&visibility=private",
@@ -134,7 +134,7 @@ describe("claim HTTP boundary", () => {
       ownerId: "verified-owner",
       publicOnly: false,
     });
-    expect((await response.json()).summary).toEqual({ awaitingStart: 37, unscored: 5 });
+    expect((await response.json()).summary).toEqual({ total: 42, scored: 24, met: 15, notMet: 9, pending: 12, unclear: 1, unscored: 5 });
   });
   it.each([
     "?scope=public&visibility=private",

@@ -186,8 +186,8 @@ export function LiveClaimComposer() {
               </p>
             </div>
             <p className="field-help">
-              Starting prices are not known before the eligible observation occurs. Price retrieval
-              is not connected yet; scorable calls remain awaiting data.
+              Starting prices are captured from the eligible Massive observation when the claim is
+              resolved. Treasury, spot-commodity, and crypto bindings remain provider-specific.
             </p>
           </section>
           <div className="filter-tabs ai-mode-tabs" role="group" aria-label="Define claim terms">
@@ -334,8 +334,8 @@ export function LiveClaimComposer() {
               <dt>Measurement</dt>
               <dd>
                 First eligible observation strictly after database commitment; first eligible
-                observation on or after the horizon. Daily fixing rules are locked. Market data is
-                not connected yet.
+                observation on or after the horizon. Daily fixing rules are locked. Supported stock
+                and ETF claims resolve from Massive; unsupported identities remain pending.
               </dd>
             </div>
             <div>

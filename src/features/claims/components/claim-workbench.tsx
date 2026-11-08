@@ -183,7 +183,8 @@ export function ClaimWorkbench({
             ))}
           </select>
           <p className="field-help">
-            Starter examples across asset classes. Live provider coverage is not connected.
+            Starter examples across asset classes. Live Massive coverage currently applies to U.S.
+            stocks and ETFs; other identities remain explicitly bounded until their provider is defined.
           </p>
         </div>
         {isComparison && (
@@ -236,7 +237,7 @@ export function ClaimWorkbench({
               </div>
             ) : (
               <p className="field-help">
-                A position statement has no market-performance outcome. ProvenAlpha does not verify
+                A position statement has no market-performance outcome. MarkToThesis does not verify
                 that a position exists.
               </p>
             )}

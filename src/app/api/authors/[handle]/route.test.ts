@@ -19,7 +19,7 @@ beforeEach(() => {
     bio: "",
   });
   vi.mocked(listClaimFeed).mockResolvedValue({ claims: [], nextCursor: null });
-  vi.mocked(getRecordSummary).mockResolvedValue({ awaitingStart: 30, unscored: 4 });
+  vi.mocked(getRecordSummary).mockResolvedValue({ total: 34, scored: 20, met: 12, notMet: 8, pending: 9, unclear: 1, unscored: 4 });
 });
 describe("public author HTTP boundary", () => {
   it("uses the looked-up author and a public-only scope for both records and full-history counts", async () => {

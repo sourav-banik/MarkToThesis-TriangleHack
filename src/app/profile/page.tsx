@@ -1,30 +1,34 @@
 import type { Metadata } from "next";
-import { ReplayHistory } from "@/features/replay/components/replay-history";
+import Link from "next/link";
 import { accountState } from "@/features/auth/server";
+import { OwnerRecord } from "@/features/profiles/components/owner-record";
+import { EmptyState } from "@/components/ui/empty-state";
+import { buttonClass } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Author record" };
-export default async function ProfilePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ record?: string }>;
-}) {
-  const [query, account] = await Promise.all([searchParams, accountState()]);
-  const initialTab = query.record === "demo" ? "demo" : account.user ? "live" : "demo";
+export default async function ProfilePage() {
+  const account = await accountState();
   return (
     <div className="page-container">
       <div className="page-heading">
-        <span className="eyebrow">THE WHOLE PICTURE</span>
+        <span className="eyebrow">YOUR TRACK RECORD</span>
         <h1>
-          A record built
+          Every call.
           <br />
-          <em>one call at a time.</em>
+          <em>The complete record.</em>
         </h1>
-        <p>
-          Your saved calls and the fictional demo history stay separate. Original terms remain
-          visible.
-        </p>
+        <p>See your logged calls, saved outcomes, and the share of scored calls that were met.</p>
       </div>
-      <ReplayHistory key={initialTab} initialTab={initialTab} />
+      {account.user ? (
+        <OwnerRecord />
+      ) : (
+        <EmptyState
+          title="Sign in to build your record"
+          action={<Link href="/account?next=/profile" className={buttonClass()}>Sign in</Link>}
+        >
+          <p>Your live history is private until you choose to publish an individual claim.</p>
+        </EmptyState>
+      )}
     </div>
   );
 }

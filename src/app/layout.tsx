@@ -4,9 +4,9 @@ import { getServerEnv } from "@/lib/server/env";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "ProvenAlpha — Conviction, with a record", template: "%s | ProvenAlpha" },
+  title: { default: "MarkToThesis — Clear market calls", template: "%s | MarkToThesis" },
   description:
-    "Turn market commentary into clear claims, inspect the evidence, and build a transparent record of calls logged on ProvenAlpha.",
+    "Turn market commentary into clear claims, inspect the evidence, and build a transparent record of calls logged on MarkToThesis.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

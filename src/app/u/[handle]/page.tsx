@@ -37,7 +37,7 @@ export default async function PublicAuthorPage({
   return (
     <div className="page-container">
       <div className="page-heading">
-        <span className="eyebrow">PUBLIC CLAIMS LOGGED ON PROVENALPHA</span>
+        <span className="eyebrow">PUBLIC CLAIMS LOGGED ON MARKTOTHESIS</span>
         <h1>{profile.displayName}</h1>
         <p>
           @{profile.handle} · {profile.bio || "A public record of logged calls."}

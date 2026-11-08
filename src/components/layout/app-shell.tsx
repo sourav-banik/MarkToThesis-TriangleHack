@@ -42,15 +42,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         Skip to content
       </a>
       <aside className="sidebar">
-        <Link href="/" className="brand" aria-label="ProvenAlpha home">
+        <Link href="/" className="brand" aria-label="MarkToThesis home">
           <span className="brand-mark" aria-hidden="true">
             <span />
             <span />
             <span />
           </span>
           <span>
-            Proven<span className="brand-light">Alpha</span>
-            <small>CONVICTION. ACCOUNTABILITY.</small>
+            MarkTo<span className="brand-light">Thesis</span>
+            <small>CLEAR CLAIMS. FULL RECORDS.</small>
           </span>
         </Link>
         <div className="nav-caption">WORKSPACE</div>
@@ -105,17 +105,17 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
         <div className="preview-banner">
-          <span>{pathname.startsWith("/replay") ? "SYNTHETIC REPLAY" : "ILLUSTRATIVE DATA"}</span>
+          <span>{pathname.startsWith("/replay") ? "SYNTHETIC REPLAY" : "LIVE CLAIMS ARE PROSPECTIVE"}</span>
           {pathname.startsWith("/replay")
             ? "Fabricated prices. Tab-local confirmation. No public publication or verified historical prediction."
-            : "Synthetic examples use fabricated prices and do not enter a live performance record. Live claims are marked separately."}
+            : "A timestamp shows when a claim was logged here, not when it was first said elsewhere or whether money was invested."}
         </div>
         <main id="main-content" tabIndex={-1}>
           {children}
         </main>
         <footer className="app-footer">
           <span>
-            ProvenAlpha <span className="footer-divider">/</span> Every call has a context.
+            MarkToThesis <span className="footer-divider">/</span> Every call has a context.
           </span>
           <span>Claims are not verified trades.</span>
         </footer>

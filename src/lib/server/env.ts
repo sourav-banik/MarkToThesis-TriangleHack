@@ -44,6 +44,9 @@ const serverEnvSchema = z.object({
   ),
   TWELVE_DATA_API_KEY: optionalSecret,
   FRED_API_KEY: optionalSecret,
+  MASSIVE_API_KEY: optionalSecret,
+  SUPABASE_SECRET_KEY: optionalSecret,
+  SUPABASE_SERVICE_ROLE_KEY: optionalSecret,
 });
 
 // No secrets or authenticated sessions are serialized into client configuration.
@@ -56,7 +59,32 @@ export function getServerEnv() {
     ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL,
     TWELVE_DATA_API_KEY: process.env.TWELVE_DATA_API_KEY,
     FRED_API_KEY: process.env.FRED_API_KEY,
+    MASSIVE_API_KEY: process.env.MASSIVE_API_KEY,
+    SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   });
+}
+
+export function getMassiveConfig() {
+  const key = getServerEnv().MASSIVE_API_KEY;
+  return key ? { apiKey: key, baseUrl: "https://api.massive.com" } : null;
+}
+
+export function getSupabaseTrustedConfig() {
+  const env = getServerEnv();
+  if (env.SUPABASE_SECRET_KEY && env.SUPABASE_SERVICE_ROLE_KEY && env.SUPABASE_SECRET_KEY !== env.SUPABASE_SERVICE_ROLE_KEY)
+    throw new Error("SUPABASE_SECRET_KEY and SUPABASE_SERVICE_ROLE_KEY must match when both are set.");
+  const key = env.SUPABASE_SECRET_KEY ?? env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!env.SUPABASE_URL || !key) return null;
+  if (key.startsWith("sb_publishable_")) throw new Error("A publishable Supabase key cannot be used for trusted writes.");
+  if (key.startsWith("sb_secret_")) return { url: env.SUPABASE_URL, key };
+  try {
+    const payload = JSON.parse(Buffer.from(key.split(".")[1] ?? "", "base64url").toString()) as { role?: string };
+    if (payload.role !== "service_role") throw new Error("not service role");
+  } catch {
+    throw new Error("Use a Supabase secret key or legacy service-role key for trusted writes.");
+  }
+  return { url: env.SUPABASE_URL, key };
 }
 
 export function getClaudeConfig() {

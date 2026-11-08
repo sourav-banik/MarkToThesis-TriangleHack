@@ -33,7 +33,7 @@ select test_support.assert((select count(*) = 2 from public.claims), 'Retry crea
 select test_support.expect_error($q$select public.commit_claim('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','Changed text',test_support.base_terms(),'private')$q$,'23505','Changed request cannot reuse idempotency key');
 select test_support.assert((select c.created_at = v.committed_at and c.created_at >= transaction_timestamp() and c.created_at <= clock_timestamp() from public.claims c join public.claim_versions v on v.claim_id=c.id where c.id=:'private_id'), 'Claim and version share a database-issued timestamp');
 select test_support.assert((select context = '{"kind":"live"}'::jsonb from public.claim_versions where claim_id=:'private_id'), 'Replay context cannot enter live versions');
-select test_support.assert((select market_bindings->'asset'->>'provider' = 'twelve_data' from public.claim_versions where claim_id=:'private_id'), 'Exact provider binding is saved with the version');
+select test_support.assert((select market_bindings->'asset'->>'provider' = 'massive' from public.claim_versions where claim_id=:'private_id'), 'Exact provider binding is saved with the version');
 select test_support.expect_error('select idempotency_key from public.claims','42501','Idempotency metadata is not exposed');
 select test_support.expect_error(format('update public.claims set visibility=''private'' where id=%L',:'public_id'),'42501','Public claims cannot be hidden');
 select test_support.expect_error(format('delete from public.claims where id=%L',:'public_id'),'42501','Owners cannot delete misses');

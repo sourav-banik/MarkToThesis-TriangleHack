@@ -110,7 +110,7 @@ export default function FeedPage() {
           <div className="aside-footnote">
             <span className="eyebrow">A NOTE ON TRUST</span>
             <p>
-              A timestamp records when a claim enters ProvenAlpha. It does not verify a trade or an
+              A timestamp records when a claim enters MarkToThesis. It does not verify a trade or an
               earlier prediction elsewhere.
             </p>
           </div>

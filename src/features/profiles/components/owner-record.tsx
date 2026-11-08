@@ -32,11 +32,14 @@ export function OwnerRecord() {
       )}
       <div className="section-heading">
         <div>
-          <span className="eyebrow">YOUR DATABASE RECORDS</span>
-          <h2>Public and private calls</h2>
+          <span className="eyebrow">YOUR LIVE RECORD</span>
+          <h2>Calls, outcomes, and context</h2>
         </div>
+        <Link href="/new" className={buttonClass()}>
+          Log a claim
+        </Link>
       </div>
-      <LiveClaimList scope="mine" />
+      <LiveClaimList scope="mine" simple />
     </section>
   );
 }

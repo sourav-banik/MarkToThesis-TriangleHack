@@ -49,7 +49,12 @@ export function literalSearchPattern(value: string) {
 }
 export const feedRecordSchema = persistedClaimSchema.extend({ author: profileSchema });
 export const recordSummarySchema = z.object({
-  awaitingStart: z.number().int().nonnegative(),
+  total: z.number().int().nonnegative(),
+  scored: z.number().int().nonnegative(),
+  met: z.number().int().nonnegative(),
+  notMet: z.number().int().nonnegative(),
+  pending: z.number().int().nonnegative(),
+  unclear: z.number().int().nonnegative(),
   unscored: z.number().int().nonnegative(),
 });
 export const feedPageSchema = z.object({

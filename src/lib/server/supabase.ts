@@ -2,7 +2,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
-import { getSupabaseConfig } from "./env";
+import { getSupabaseConfig, getSupabaseTrustedConfig } from "./env";
 
 export async function createSupabaseServerClient() {
   const config = getSupabaseConfig();
@@ -29,6 +29,15 @@ export type ServerSupabase = NonNullable<Awaited<ReturnType<typeof createSupabas
 
 export function createPublicSupabaseClient() {
   const config = getSupabaseConfig();
+  if (!config) return null;
+  return createClient(config.url, config.key, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }) },
+  });
+}
+
+export function createSupabaseTrustedClient() {
+  const config = getSupabaseTrustedConfig();
   if (!config) return null;
   return createClient(config.url, config.key, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },

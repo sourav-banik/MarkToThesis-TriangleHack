@@ -18,7 +18,7 @@ export function requireSameOrigin(request: Request) {
   if (!config && request.headers.get("host")) previewUrl.host = request.headers.get("host")!;
   const expected = config?.appOrigin ?? previewUrl.origin;
   if (request.headers.get("origin") !== expected)
-    throw new HttpError(403, "This action must come from the ProvenAlpha app.");
+    throw new HttpError(403, "This action must come from the MarkToThesis app.");
 }
 export async function readJson<T extends z.ZodType>(
   request: Request,

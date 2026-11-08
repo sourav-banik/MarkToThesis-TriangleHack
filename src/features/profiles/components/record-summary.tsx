@@ -12,21 +12,27 @@ export function RecordSummaryPanel({ summary, mine }: { summary: RecordSummary; 
       <dl className="record-summary-metrics">
         <div>
           <dt>Logged calls</dt>
-          <dd>{summary.awaitingStart + summary.unscored}</dd>
+          <dd>{summary.total}</dd>
         </div>
         <div>
-          <dt>Awaiting data</dt>
-          <dd>{summary.awaitingStart}</dd>
+          <dt>Scored</dt>
+          <dd>{summary.scored}</dd>
         </div>
         <div>
-          <dt>Unscored stances</dt>
-          <dd>{summary.unscored}</dd>
+          <dt>Met</dt>
+          <dd>{summary.met}</dd>
+        </div>
+        <div>
+          <dt>Not met</dt>
+          <dd>{summary.notMet}</dd>
+        </div>
+        <div>
+          <dt>Met rate</dt>
+          <dd>{summary.scored ? `${Math.round((summary.met / summary.scored) * 100)}%` : "—"}</dd>
         </div>
       </dl>
       <p>
-        Counts cover all {mine ? "your public and private" : "public"} calls, regardless of the
-        filters or page below. Live resolution is not connected yet; accuracy and return statistics
-        are unavailable. Synthetic outcomes are excluded.
+        Based on saved deterministic outcomes across all {mine ? "your public and private" : "public"} calls. Pending ({summary.pending}), unclear ({summary.unclear}), and position-only ({summary.unscored}) calls are excluded from the met rate. Synthetic replays are excluded.
       </p>
     </section>
   );

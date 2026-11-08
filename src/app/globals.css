@@ -96,6 +96,118 @@
   }
 }
 
+/* Readability pass: the original editorial scale was too small for a working app. */
+:root {
+  --ink: #171923;
+  --muted: #505460;
+  --line: #d5d7dd;
+}
+body {
+  font-size: 16px;
+  line-height: 1.55;
+}
+.app-shell p {
+  color: #454954;
+  font-size: 16px;
+  line-height: 1.65;
+}
+.app-shell .eyebrow,
+.app-shell .nav-caption {
+  color: #4a3d64;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.25px;
+}
+.app-shell .field-help,
+.app-shell small,
+.app-shell .small,
+.app-shell .muted {
+  color: #555968;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.app-shell label,
+.app-shell legend,
+.app-shell .field-label {
+  color: #282b36;
+  font-size: 14px;
+  font-weight: 700;
+}
+.app-shell input,
+.app-shell select,
+.app-shell textarea {
+  color: #1c1f29;
+  font-size: 16px;
+  line-height: 1.45;
+}
+.app-shell .button,
+.app-shell button {
+  font-size: 14px;
+}
+.app-shell .brand {
+  font-size: 22px;
+}
+.app-shell .brand small {
+  color: #555967;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+.app-shell .nav-item {
+  color: #464a56;
+  font-size: 15px;
+  font-weight: 500;
+}
+.app-shell .sidebar-note > span,
+.app-shell .sidebar-bottom {
+  color: #555967;
+  font-size: 12px;
+}
+.app-shell .topbar-title,
+.app-shell .topbar-actions,
+.app-shell .topbar-link {
+  color: #464a56;
+  font-size: 14px;
+}
+.app-shell .preview-banner {
+  color: #4f493c;
+  font-size: 13px;
+}
+.app-shell .preview-banner > span {
+  color: #544b36;
+  font-size: 10px;
+}
+.app-shell .live-card-author,
+.app-shell .live-card-confidence,
+.app-shell .live-results-caption,
+.app-shell .comment-meta {
+  color: #4f5360;
+  font-size: 13px;
+}
+.app-shell .live-card-author strong,
+.app-shell .live-card-confidence a {
+  color: #302746;
+}
+.app-shell .record-summary-metrics dt {
+  color: #4d415f;
+  font-size: 13px;
+  font-weight: 700;
+}
+.app-shell .record-summary-metrics dd {
+  color: #201b2e;
+  font-size: 28px;
+}
+.app-shell .badge {
+  font-size: 12px;
+}
+@media (max-width: 760px) {
+  .app-shell p {
+    font-size: 15px;
+  }
+  .app-shell .nav-item {
+    font-size: 12px;
+  }
+}
+
 @theme inline {
   --color-ink: #20232d;
   --color-paper: #f8f8f5;
@@ -2379,6 +2491,82 @@ h1 em {
   line-height: 1.9;
   margin-top: 15px;
   overflow-wrap: anywhere;
+}
+.claim-comments {
+  display: grid;
+  gap: 1rem;
+}
+.comment-list {
+  display: grid;
+  gap: 0.75rem;
+}
+.comment {
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  padding: 0.9rem 1rem;
+  background: color-mix(in srgb, var(--paper) 88%, var(--ink) 12%);
+}
+.comment p {
+  margin: 0.55rem 0 0;
+  white-space: pre-wrap;
+}
+.comment-meta {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.comment-meta strong {
+  color: var(--ink);
+}
+.comment-meta time {
+  margin-left: auto;
+}
+.comment-form {
+  display: grid;
+  gap: 0.65rem;
+}
+.claim-price-chart {
+  margin-top: 1.5rem;
+}
+.price-chart {
+  display: block;
+  width: 100%;
+  max-width: 680px;
+  margin-top: 1rem;
+  overflow: visible;
+}
+.chart-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+}
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.25rem;
+  margin-top: 0.7rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.chart-legend i {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+}
+.chart-axis {
+  display: flex;
+  justify-content: space-between;
+  max-width: 680px;
+  color: var(--muted);
+  font-size: 0.72rem;
 }
 .replay-record-grid {
   display: grid;

@@ -9,8 +9,8 @@ export function liveBindingFor(instrument: Instrument): LiveBinding | null {
   if (!canonical || JSON.stringify(canonical) !== JSON.stringify(instrument)) return null;
   if (instrument.assetClass === "stock" || instrument.assetClass === "etf") {
     return {
-      provider: "twelve_data",
-      seriesId: `${instrument.symbol}@${instrument.venue}`,
+      provider: "massive",
+      seriesId: instrument.symbol,
       fixing: "regular_session_close",
       version: 1,
     };

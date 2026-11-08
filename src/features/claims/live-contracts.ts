@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { commitmentTermsSchema, committedClaimVersionSchema } from "./contracts";
+import { resolutionSchema } from "../resolution/contracts";
+import { reasoningReviewSchema } from "../ai/contracts";
 import { liveBindingFor } from "../market-data/live-bindings";
 import { instrumentCatalog } from "../market-data/catalog";
 
@@ -66,9 +68,11 @@ export const persistedClaimSchema = z.object({
     (version) => version.context.kind === "live",
     "Persistent claims must use live context.",
   ),
-  status: z.enum(["awaiting_start", "unscored"]),
+  status: z.enum(["awaiting_start", "active", "awaiting_data", "met", "not_met", "unclear", "unscored"]),
   supersedesClaimId: z.uuid().nullable(),
   marketBindings: z.record(z.string(), z.unknown()),
+  resolution: resolutionSchema.nullable().optional(),
+  reasoningReview: reasoningReviewSchema.nullable().optional(),
 });
 export type LiveClaimRequest = z.infer<typeof liveClaimRequestSchema>;
 export type PersistedClaim = z.infer<typeof persistedClaimSchema>;

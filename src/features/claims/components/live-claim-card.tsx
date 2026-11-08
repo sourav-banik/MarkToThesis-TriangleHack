@@ -15,7 +15,7 @@ export function LiveClaimCard({ claim, author }: { claim: PersistedClaim; author
           <strong>{author.displayName}</strong>
           <span>@{author.handle}</span>
         </Link>
-        <span>Logged on ProvenAlpha</span>
+        <span>Logged on MarkToThesis</span>
       </div>
       <div className="claim-card-top">
         <div className="asset-identity">
@@ -25,8 +25,8 @@ export function LiveClaimCard({ claim, author }: { claim: PersistedClaim; author
             <span>Live claim · {formatHorizon(version.terms.horizon)}</span>
           </div>
         </div>
-        <Badge tone={claim.status === "unscored" ? "muted" : "purple"}>
-          {claim.status === "unscored" ? "Unscored" : "Awaiting data"}
+        <Badge tone={claim.status === "unscored" || claim.status === "not_met" ? "muted" : "purple"}>
+          {claim.status === "unscored" ? "Unscored" : claim.status === "met" ? "Met" : claim.status === "not_met" ? "Not met" : claim.status === "unclear" ? "Unclear" : "Awaiting data"}
         </Badge>
       </div>
       <h3>

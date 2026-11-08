@@ -2,9 +2,9 @@
 
 An AI-powered platform for making clear market claims and building a transparent record of their outcomes.
 
-## Current increment: Part 6
+## Current increment: Part 10
 
-This repository contains the Next.js foundation, shared domain contracts, a deterministic resolution engine, a tab-local synthetic replay, Supabase authentication and persistent commitment, public/owner records, and Claude-powered claim parsing. The preview runs without API keys; Supabase enables live accounts, and an Anthropic API key enables authenticated AI clarification.
+This repository contains the Next.js foundation, shared domain contracts, a deterministic resolution engine, a tab-local synthetic replay, Supabase authentication and persistent commitment, public/owner records, Claude-powered claim parsing, and a Massive-backed live resolver. The preview runs without API keys; Supabase enables live accounts, an Anthropic API key enables authenticated AI clarification, and Massive enables live stock/ETF observations.
 
 Included:
 
@@ -21,8 +21,12 @@ Included:
 - Separate public live feed, owner history, public author pages, and saved-claim details.
 - Server-side search and filters, author/confidence details, precise cursor pagination, resilient page retries, and full-history profile summaries.
 - Claude structured extraction, missing-term questions, source-checked proposals, editable prefilling, and required review before commitment.
+- Massive daily bars, split-adjusted price normalization, NYSE session calendars, deterministic live resolution, and trusted append-only persistence.
+- Evidence-grounded Claude reviews of saved assumptions, with source links retained separately from numerical outcomes.
+- Claim-level discussion with immutable comments, visibility-aware RLS, and no effect on claim terms or scores.
+- Simplified live demo: account entry, Claude-assisted submission, a saved-outcome scorecard, and Massive relative-price charts.
 
-Follow [the connection and persistence guide](docs/persistence.md) to configure Supabase and [the Claude parser guide](docs/claude-parser.md) to enable AI clarification. Missing keys produce honest setup states and manual entry remains available. Market-data retrieval, live resolution, evidence-based AI reasoning review, and comments are not connected. Measurable live commitments await their starting observations; position-only holds are unscored. Selected instruments have fixed source bindings; other measurable live forecasts remain blocked until their exact provider/fixing is defined.
+Follow [the connection and persistence guide](docs/persistence.md) to configure Supabase, [the Claude parser guide](docs/claude-parser.md) to enable AI clarification, and [the reasoning review guide](docs/reasoning-review.md) for evidence review. Missing keys produce honest setup states and manual entry remains available. Claim-level comments remain deferred. Measurable live commitments await their starting observations; position-only holds are unscored. Selected instruments have fixed source bindings; other measurable live forecasts remain blocked until their exact provider/fixing is defined.
 
 Replay confirmation uses the browser clock and `sessionStorage`, not a server timestamp or immutable database record. All replay prices and prior outcomes are fabricated examples. Replay records remain separate from real accounts and live tables.
 
@@ -41,7 +45,19 @@ The default three-day replay produces +10% asset return, +5% benchmark return, a
 
 ## Browse live records
 
-Once Supabase is configured, public calls appear on `/`. Search original wording, combine asset/type/status/horizon filters, and load older pages. Author links open `/u/[handle]`; `/profile` shows the signed-in owner's public and private calls. Profile summaries cover the full visible history, regardless of filters. Live accuracy and return statistics remain unavailable until market resolution is integrated. See [Part 5 behavior and boundaries](docs/feed-and-records.md). This increment needs no additional SQL migration.
+Once Supabase is configured, public calls appear on `/`. Search original wording, combine asset/type/status/horizon filters, and load older pages. Author links open `/u/[handle]`; `/profile` shows the signed-in owner's public and private calls. Profile summaries cover the full visible history, regardless of filters. See [Part 5 behavior and boundaries](docs/feed-and-records.md).
+
+## Resolve a live claim with Massive
+
+Part 7 supports U.S. stocks and ETFs whose exact committed provider binding is `massive`. Set `MASSIVE_API_KEY` and either the current `SUPABASE_SECRET_KEY` or legacy `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`, then apply `supabase/migrations/202611070003_massive_resolution.sql`. The claim owner can use **Resolve with live data** on a saved claim. Massive daily bars are split-adjusted for price performance; dividends remain excluded by the saved convention. Treasury yields, WTI spot, gold spot, and crypto remain explicit catalog identities but need their own exact provider adapters before live commitment.
+
+## Review reasoning with evidence
+
+Part 8 adds `supabase/migrations/202611070004_reasoning_reviews.sql`. Apply it after the previous migrations. On a committed claim with saved assumptions, the owner can attach dated source excerpts and run a Claude review. The model may label assumptions supported, contradicted, or unresolved only from those supplied evidence items. Reviews are append-only and never write or alter the Massive performance resolution.
+
+## Run the simple live demo
+
+Sign in at `/account`, log a Claude-assisted claim from `/new`, and open `/profile` for the live scorecard. The scorecard shows logged calls, scored calls, met/not-met totals, and met rate from saved deterministic resolutions only. Each supported stock/ETF claim page includes a Massive relative-price chart; it is visual context only and does not rewrite the stored resolution. See [the live demo flow](docs/live-demo.md).
 
 ## Clarify a call with Claude
 
@@ -56,7 +72,7 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:3000. Leave credentials empty to explore the preview. When ready, copy `.env.example` to `.env.local`, apply the two migrations, and set the exact `APP_URL`, `SUPABASE_URL`, and `SUPABASE_PUBLISHABLE_KEY` following [the setup guide](docs/persistence.md). Keep provider secrets on the server; never add a `NEXT_PUBLIC_` prefix to secrets.
+Open http://localhost:3000. Leave credentials empty to explore the preview. When ready, copy `.env.example` to `.env.local`, apply migrations `202611070001` through `202611070005` in order, and set the exact `APP_URL`, `SUPABASE_URL`, and `SUPABASE_PUBLISHABLE_KEY` following [the setup guide](docs/persistence.md). Keep provider secrets on the server; never add a `NEXT_PUBLIC_` prefix to secrets.
 
 ## Checks
 
@@ -96,7 +112,8 @@ If a compatible Chrome or Edge is already installed, set `PLAYWRIGHT_CHANNEL=chr
 | `src/features/market-data` | Instrument catalog, observation contracts, adapter boundary                                 |
 | `src/features/resolution`  | Calendar selection, exact arithmetic, data validation, and deterministic resolution         |
 | `src/features/replay`      | Versioned synthetic dataset, validated tab store, confirmation, results, and history        |
-| `src/features/ai`          | Claude adapter, grounded proposal validation, clarification UI, and future review contracts |
+| `src/features/ai`          | Claude adapter, grounded proposal validation, clarification UI, and evidence reviews          |
+| `src/features/comments`    | Claim-level comment contracts, visibility-aware reads, and authenticated writes               |
 | `src/features/feed`        | Scoped live queries, filters, cursor pagination, summaries, and example feed                |
 | `src/features/profiles`    | Safe author lookup, owner profile header, and record summaries                              |
 | `src/lib/server`           | Server-only configuration, Supabase clients, and HTTP boundaries                            |

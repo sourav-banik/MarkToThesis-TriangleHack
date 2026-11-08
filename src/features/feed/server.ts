@@ -4,6 +4,7 @@ import type { ServerSupabase } from "@/lib/server/supabase";
 import { HttpError } from "@/lib/server/http";
 import { mapLiveClaim, claimRowSchema, claimColumns } from "@/features/claims/server";
 import { mapPublicProfile } from "@/features/profiles/server";
+import { resolutionSchema } from "@/features/resolution/contracts";
 import {
   defaultFeedFilters,
   feedRecordSchema,
@@ -72,20 +73,27 @@ export async function listClaimFeed(
 }
 
 export async function getRecordSummary(client: ServerSupabase, scope: RecordScope) {
-  // Exact scoped counts cover all history, independently of list filters and pagination.
-  const counts = await Promise.all(
-    ["awaiting_start", "unscored"].map(async (status) => {
-      let query = client
-        .from("claims")
-        .select("id", { count: "exact", head: true })
-        .eq("initial_status", status);
-      if (scope.ownerId) query = query.eq("author_id", scope.ownerId);
-      if (scope.publicOnly) query = query.eq("visibility", "public");
-      const { count, error } = await query;
-      if (error || count === null)
-        throw new HttpError(503, "The record summary is temporarily unavailable.");
-      return count;
-    }),
-  );
-  return { awaitingStart: counts[0], unscored: counts[1] };
+  // The scorecard reads saved outcomes only. It never derives a win from a current quote.
+  let query = client
+    .from("claims")
+    .select("initial_status,claim_versions(resolutions(payload,recorded_at))");
+  if (scope.ownerId) query = query.eq("author_id", scope.ownerId);
+  if (scope.publicOnly) query = query.eq("visibility", "public");
+  const { data, error } = await query;
+  if (error) throw new HttpError(503, "The record summary is temporarily unavailable.");
+  const counts = { total: 0, scored: 0, met: 0, notMet: 0, pending: 0, unclear: 0, unscored: 0 };
+  for (const claim of (data ?? []) as { initial_status: string; claim_versions: { resolutions?: { payload: unknown; recorded_at: string }[] }[] }[]) {
+    counts.total++;
+    const latest = [...(claim.claim_versions[0]?.resolutions ?? [])]
+      .sort((left, right) => right.recorded_at.localeCompare(left.recorded_at))
+      .map((item) => resolutionSchema.safeParse(item.payload).data)
+      .find((item) => item !== undefined);
+    const status = latest?.outcome ?? claim.initial_status;
+    if (status === "met") { counts.met++; counts.scored++; }
+    else if (status === "not_met") { counts.notMet++; counts.scored++; }
+    else if (status === "unclear") counts.unclear++;
+    else if (status === "unscored") counts.unscored++;
+    else counts.pending++;
+  }
+  return counts;
 }

@@ -44,9 +44,14 @@ export default async function ClaimExamplePage({ params }: { params: Promise<{ i
       if (error instanceof HttpError && error.status === 404) notFound();
       throw error;
     }
+    const { data: session } = await client.auth.getUser();
     return (
       <div className="page-container">
-        <LiveClaimDetail {...record} />
+        <LiveClaimDetail
+          {...record}
+          canManage={session.user?.id === record.claim.version.authorId}
+          canComment={!!session.user && (record.claim.version.visibility === "public" || session.user.id === record.claim.version.authorId)}
+        />
       </div>
     );
   }

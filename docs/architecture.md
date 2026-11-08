@@ -18,6 +18,12 @@ Part 5 adds server-filtered public/owner history, joined author identities, prec
 
 Part 6 adds Claude extraction and clarification behind a server-only adapter. The model proposes source-backed fields; application code identifies missing terms and validates the full proposal. Applying it only prefills an editable form. The existing commitment endpoint remains the sole path to logging. See [Claude parser](claude-parser.md). Shared platform conventions live in `features/claims/conventions.ts`, independently of demo data.
 
+Part 7 adds a server-only Massive adapter for U.S. stock/ETF daily bars, an explicit NYSE session calendar, and a trusted Supabase persistence function. The resolver still owns outcome calculation; Massive supplies observations only. See [Massive live resolution](massive-resolution.md).
+
+Part 8 adds an owner-triggered, evidence-grounded Claude review. Evidence is supplied and retained by the author; Claude may assess saved assumptions but cannot calculate, rewrite, or persist a market-performance outcome. See [reasoning review](reasoning-review.md).
+
+Part 9 adds claim-level comments. Visibility and authorship are enforced by Supabase RLS; comments are append-only and remain outside claim terms, resolutions, and reasoning reviews. See [claim comments](claim-comments.md).
+
 ## Claim kinds
 
 | Kind                     | Testable meaning                                                                                                                                                                              |
@@ -84,7 +90,7 @@ AI reviews are not causal proof of a price movement. There is no market-performa
 
 ## Next increment
 
-Parts 4–6 provide authentication, protected commitment, public/owner records, and Claude claim clarification. Part 7 can connect market data and live resolution as its own module. Synthetic replay records stay separate from real claims. Existing live counts cover pending/unscored commitments; extend their status model and presentation together when persisted resolutions arrive. Grounded rationale review remains distinct from parsing and numerical resolution.
+Parts 4–9 provide authentication, protected commitment, public/owner records, Claude claim clarification, Massive-backed live resolution for stock/ETF claims, evidence-grounded reasoning review, and claim-level discussion. Synthetic replay records stay separate from real claims. Discussion remains distinct from parsing, reasoning review, and numerical resolution.
 
 ## Dependency maintenance
 

@@ -123,29 +123,32 @@ describe("database feed read service", () => {
       "internal details",
     );
   });
-  it("counts all public author history with HEAD queries, independent of page size", async () => {
-    const fetcher = vi.fn(async (url: RequestInfo | URL) => {
-      const params = new URL(String(url)).searchParams;
-      return new Response(null, {
-        headers: {
-          "Content-Range": `0-0/${params.get("initial_status") === "eq.unscored" ? 5 : 37}`,
-        },
-      });
-    });
+  it("summarizes saved outcomes without inferring a score from current prices", async () => {
+    const fetcher = vi.fn(async () =>
+      Response.json([
+        { initial_status: "awaiting_start", claim_versions: [{ resolutions: [] }] },
+        { initial_status: "unscored", claim_versions: [{ resolutions: [] }] },
+      ]),
+    );
     const client = createClient("https://fixture.example", "sb_publishable_fixture", {
       auth: { persistSession: false, autoRefreshToken: false },
       global: { fetch: fetcher },
     }) as ServerSupabase;
     expect(await getRecordSummary(client, { ownerId: owner, publicOnly: true })).toEqual({
-      awaitingStart: 37,
-      unscored: 5,
+      total: 2,
+      scored: 0,
+      met: 0,
+      notMet: 0,
+      pending: 1,
+      unclear: 0,
+      unscored: 1,
     });
     for (const [url, init] of fetcher.mock.calls as unknown as [string, RequestInit][]) {
       const params = new URL(url).searchParams;
       expect(params.get("visibility")).toBe("eq.public");
       expect(params.get("author_id")).toBe(`eq.${owner}`);
-      expect(params.has("limit")).toBe(false);
-      expect(init.method).toBe("HEAD");
+      expect(params.get("select")).toContain("resolutions(payload,recorded_at)");
+      expect(init.method).toBe("GET");
     }
   });
   it("looks up only safe public profile fields and gives a real not-found result", async () => {

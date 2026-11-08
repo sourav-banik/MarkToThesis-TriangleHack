@@ -17,17 +17,18 @@ import { FeedFiltersForm } from "@/features/feed/components/feed-filters";
 import { RecordSummaryPanel } from "@/features/profiles/components/record-summary";
 import { LiveClaimCard } from "./live-claim-card";
 
-type Props = { scope?: "public" | "mine"; authorHandle?: string };
-export function LiveClaimList({ scope = "public", authorHandle }: Props) {
+type Props = { scope?: "public" | "mine"; authorHandle?: string; simple?: boolean };
+export function LiveClaimList({ scope = "public", authorHandle, simple = false }: Props) {
   const [filters, setFilters] = useState(defaultFeedFilters);
   return (
     <div className="live-record-browser">
-      <FeedFiltersForm mine={scope === "mine"} onApply={setFilters} />
+      {!simple && <FeedFiltersForm mine={scope === "mine"} onApply={setFilters} />}
       <FeedResults
         key={`${scope}:${authorHandle ?? ""}:${JSON.stringify(filters)}`}
         scope={scope}
         authorHandle={authorHandle}
         filters={filters}
+        simple={simple}
       />
     </div>
   );

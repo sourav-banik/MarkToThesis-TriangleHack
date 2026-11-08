@@ -4,9 +4,11 @@ import type { ServerSupabase } from "@/lib/server/supabase";
 import { HttpError } from "@/lib/server/http";
 import { persistedClaimSchema, type LiveClaimRequest } from "./live-contracts";
 import { profileSchema } from "../profiles/contracts";
+import { resolutionSchema } from "../resolution/contracts";
+import { reasoningReviewSchema } from "../ai/contracts";
 
 export const claimColumns =
-  "id,author_id,visibility,initial_status,created_at,supersedes_claim_id,claim_versions(id,claim_id,version,original_text,terms,market_bindings,context,committed_at)";
+  "id,author_id,visibility,initial_status,created_at,supersedes_claim_id,claim_versions(id,claim_id,version,original_text,terms,market_bindings,context,committed_at,resolutions(id,payload,recorded_at),reasoning_reviews(id,payload,recorded_at))";
 export const claimRowSchema = z.object({
   id: z.uuid(),
   author_id: z.uuid(),
@@ -25,6 +27,8 @@ export const claimRowSchema = z.object({
         market_bindings: z.record(z.string(), z.unknown()),
         context: z.unknown(),
         committed_at: z.string(),
+        resolutions: z.array(z.object({ id: z.uuid(), payload: z.unknown(), recorded_at: z.string() })).default([]),
+        reasoning_reviews: z.array(z.object({ id: z.uuid(), payload: z.unknown(), recorded_at: z.string() })).default([]),
       }),
     )
     .length(1),
@@ -32,6 +36,14 @@ export const claimRowSchema = z.object({
 export function mapLiveClaim(value: unknown) {
   const row = claimRowSchema.parse(value);
   const version = row.claim_versions[0];
+  const resolution = [...version.resolutions]
+    .sort((left, right) => right.recorded_at.localeCompare(left.recorded_at))
+    .map((item) => resolutionSchema.safeParse(item.payload).data)
+    .find((item) => item !== undefined) ?? null;
+  const reasoningReview = [...version.reasoning_reviews]
+    .sort((left, right) => right.recorded_at.localeCompare(left.recorded_at))
+    .map((item) => reasoningReviewSchema.safeParse(item.payload).data)
+    .find((item) => item !== undefined) ?? null;
   return persistedClaimSchema.parse({
     version: {
       id: version.id,
@@ -46,9 +58,11 @@ export function mapLiveClaim(value: unknown) {
       context: version.context,
       supersedesVersionId: null,
     },
-    status: row.initial_status,
+    status: resolution?.outcome ?? row.initial_status,
     supersedesClaimId: row.supersedes_claim_id,
     marketBindings: version.market_bindings,
+    resolution,
+    reasoningReview,
   });
 }
 export async function getLiveClaim(client: ServerSupabase, id: string) {
