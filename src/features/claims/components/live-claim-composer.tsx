@@ -7,12 +7,13 @@ import { ArrowLeft, LockKeyhole } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAccount } from "@/features/auth/use-account";
-import { defaultTerms } from "@/demo/claims";
+import { standardClaimFields as defaultTerms } from "../conventions";
 import { instruments } from "@/features/market-data/catalog";
 import { liveClaimRequestSchema, persistedClaimSchema } from "../live-contracts";
 import { describePrediction, formatHorizon } from "../presentation";
 import type { ConfirmedTerms } from "../contracts";
 import { ClaimWorkbench } from "./claim-workbench";
+import { ClaudeAssistant } from "@/features/ai/components/claude-assistant";
 
 function startingTerms(): ConfirmedTerms {
   return {
@@ -33,6 +34,9 @@ export function LiveClaimComposer() {
   const [visibility, setVisibility] = useState<"public" | "private">("private");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [entryMode, setEntryMode] = useState<"ai" | "manual">("ai");
+  const [formRevision, setFormRevision] = useState(0);
+  const [aiApplied, setAiApplied] = useState(false);
   const submission = useRef<{ key: string; body: string } | null>(null);
   const saving = useRef(false);
 
@@ -135,7 +139,7 @@ export function LiveClaimComposer() {
           <section className="form-panel live-draft-panel">
             <div className="section-heading">
               <div>
-                <span className="eyebrow">LIVE CLAIM · MANUAL TERMS</span>
+                <span className="eyebrow">LIVE CLAIM · REVIEW BEFORE COMMITMENT</span>
                 <h2>Keep the original words.</h2>
               </div>
               <Badge tone="purple">Signed in</Badge>
@@ -147,7 +151,13 @@ export function LiveClaimComposer() {
                 rows={3}
                 maxLength={8000}
                 value={original}
-                onChange={(event) => setOriginal(event.target.value)}
+                onChange={(event) => {
+                  setOriginal(event.target.value);
+                  if (aiApplied) {
+                    setEntryMode("ai");
+                    setAiApplied(false);
+                  }
+                }}
               />
             </div>
             <div className="field-group">
@@ -180,7 +190,104 @@ export function LiveClaimComposer() {
               is not connected yet; scorable calls remain awaiting data.
             </p>
           </section>
-          <ClaimWorkbench initialTerms={terms} onReview={review} purpose="live" />
+          <div className="filter-tabs ai-mode-tabs" role="group" aria-label="Define claim terms">
+            <button
+              type="button"
+              className={entryMode === "ai" ? "selected" : ""}
+              aria-pressed={entryMode === "ai"}
+              onClick={() => setEntryMode("ai")}
+            >
+              Clarify with Claude
+            </button>
+            <button
+              type="button"
+              className={entryMode === "manual" ? "selected" : ""}
+              aria-pressed={entryMode === "manual"}
+              onClick={() => setEntryMode("manual")}
+            >
+              Define manually
+            </button>
+          </div>
+          {entryMode === "ai" ? (
+            <ClaudeAssistant
+              originalText={original}
+              rationale={rationale}
+              onApply={(proposal) => {
+                setTerms(proposal);
+                setRationale(proposal.rationale);
+                setFormRevision((revision) => revision + 1);
+                setAiApplied(true);
+                setEntryMode("manual");
+                setError(null);
+              }}
+            />
+          ) : (
+            <>
+              <div className="inline-note">
+                <p>
+                  {aiApplied
+                    ? "Claude's proposal is prefilled below. Check and edit every term before review."
+                    : "Manual fields start with editable example values. Choose every term explicitly; this form is not an AI interpretation of your original call."}
+                </p>
+              </div>
+              {terms.assumptions.length > 0 && (
+                <section className="form-panel ai-assumptions">
+                  <h2>Your stated assumptions</h2>
+                  {terms.assumptions.map((assumption, index) => (
+                    <div className="field-group" key={assumption.id}>
+                      <label htmlFor={`assumption-${index}`}>Assumption {index + 1}</label>
+                      <textarea
+                        id={`assumption-${index}`}
+                        maxLength={2000}
+                        value={assumption.statement}
+                        onChange={(event) =>
+                          setTerms((current) => ({
+                            ...current,
+                            assumptions: current.assumptions.map((item, i) =>
+                              i === index ? { ...item, statement: event.target.value } : item,
+                            ),
+                          }))
+                        }
+                      />
+                      <label htmlFor={`falsification-${index}`}>What would change this view?</label>
+                      <textarea
+                        id={`falsification-${index}`}
+                        maxLength={2000}
+                        value={assumption.falsificationCondition}
+                        onChange={(event) =>
+                          setTerms((current) => ({
+                            ...current,
+                            assumptions: current.assumptions.map((item, i) =>
+                              i === index
+                                ? { ...item, falsificationCondition: event.target.value }
+                                : item,
+                            ),
+                          }))
+                        }
+                      />
+                      <Button
+                        variant="quiet"
+                        onClick={() =>
+                          setTerms((current) => ({
+                            ...current,
+                            assumptions: current.assumptions.filter((_, i) => i !== index),
+                          }))
+                        }
+                      >
+                        Remove assumption {index + 1}
+                      </Button>
+                    </div>
+                  ))}
+                </section>
+              )}
+              <ClaimWorkbench
+                key={formRevision}
+                initialTerms={terms}
+                onReview={review}
+                purpose="live"
+              />
+            </>
+          )}
         </>
       ) : (
         <section className="detail-panel live-review-panel">
@@ -210,6 +317,15 @@ export function LiveClaimComposer() {
               <dt>Reasoning</dt>
               <dd>{terms.rationale || "Unstated"}</dd>
             </div>
+            {terms.assumptions.map((assumption) => (
+              <div key={assumption.id}>
+                <dt>Stated assumption</dt>
+                <dd>
+                  {assumption.statement}
+                  <small>What would change this view: {assumption.falsificationCondition}</small>
+                </dd>
+              </div>
+            ))}
             <div>
               <dt>Confidence</dt>
               <dd>{terms.confidencePct === null ? "Unstated" : `${terms.confidencePct}%`}</dd>

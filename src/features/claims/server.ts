@@ -5,9 +5,9 @@ import { HttpError } from "@/lib/server/http";
 import { persistedClaimSchema, type LiveClaimRequest } from "./live-contracts";
 import { profileSchema } from "../profiles/contracts";
 
-const columns =
+export const claimColumns =
   "id,author_id,visibility,initial_status,created_at,supersedes_claim_id,claim_versions(id,claim_id,version,original_text,terms,market_bindings,context,committed_at)";
-const rowSchema = z.object({
+export const claimRowSchema = z.object({
   id: z.uuid(),
   author_id: z.uuid(),
   visibility: z.enum(["public", "private"]),
@@ -29,8 +29,8 @@ const rowSchema = z.object({
     )
     .length(1),
 });
-function mapClaim(value: unknown) {
-  const row = rowSchema.parse(value);
+export function mapLiveClaim(value: unknown) {
+  const row = claimRowSchema.parse(value);
   const version = row.claim_versions[0];
   return persistedClaimSchema.parse({
     version: {
@@ -52,10 +52,14 @@ function mapClaim(value: unknown) {
   });
 }
 export async function getLiveClaim(client: ServerSupabase, id: string) {
-  const { data, error } = await client.from("claims").select(columns).eq("id", id).maybeSingle();
+  const { data, error } = await client
+    .from("claims")
+    .select(claimColumns)
+    .eq("id", id)
+    .maybeSingle();
   if (error) throw new HttpError(503, "Saved claims are temporarily unavailable.");
   if (!data) throw new HttpError(404, "This claim is unavailable or private.");
-  const claim = mapClaim(data);
+  const claim = mapLiveClaim(data);
   const profile = await client
     .from("profiles")
     .select("id,handle,display_name,bio")
@@ -100,34 +104,4 @@ export async function commitLiveClaim(client: ServerSupabase, request: LiveClaim
   }
   const id = z.uuid().parse(data);
   return getLiveClaim(client, id);
-}
-export const claimCursorSchema = z.object({
-  createdAt: z.iso.datetime({ offset: true }),
-  id: z.uuid(),
-});
-export async function listLiveClaims(
-  client: ServerSupabase,
-  options: { ownerId?: string; publicOnly: boolean; cursor?: z.infer<typeof claimCursorSchema> },
-) {
-  let query = client
-    .from("claims")
-    .select(columns)
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false })
-    .limit(21);
-  if (options.ownerId) query = query.eq("author_id", options.ownerId);
-  if (options.publicOnly) query = query.eq("visibility", "public");
-  if (options.cursor)
-    query = query.or(
-      `created_at.lt.${options.cursor.createdAt},and(created_at.eq.${options.cursor.createdAt},id.lt.${options.cursor.id})`,
-    );
-  const { data, error } = await query;
-  if (error) throw new HttpError(503, "Saved claims are temporarily unavailable.");
-  const rows = z.array(rowSchema).parse(data ?? []);
-  const page = rows.slice(0, 20);
-  const last = page.at(-1);
-  return {
-    claims: page.map(mapClaim),
-    nextCursor: rows.length > 20 && last ? { createdAt: last.created_at, id: last.id } : null,
-  };
 }

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ArrowRight, CheckCircle2, Info, LockKeyhole } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { defaultTerms } from "@/demo/claims";
+import { standardClaimFields as defaultTerms } from "../conventions";
 import { instrumentCatalog, instruments } from "@/features/market-data/catalog";
 import { commitmentTermsSchema, type ConfirmedTerms, type Prediction } from "../contracts";
 import { predictionLabels } from "../presentation";
@@ -51,6 +51,9 @@ export function ClaimWorkbench({
   const [upper, setUpper] = useState(
     initialPrediction?.kind === "range" ? String(initialPrediction.upper) : "200",
   );
+  const [rangeMetric, setRangeMetric] = useState<string>(
+    initialPrediction?.kind === "range" ? initialPrediction.metric : "quoted_value",
+  );
   const [tolerance, setTolerance] = useState(
     initialPrediction?.kind === "hold" && initialPrediction.meaning.kind === "neutral"
       ? String(initialPrediction.meaning.tolerance)
@@ -87,7 +90,7 @@ export function ClaimWorkbench({
           kind,
           lower: numberValue(lower),
           upper: numberValue(upper),
-          metric: "quoted_value",
+          metric: rangeMetric,
           boundaries: "inclusive",
           evaluation,
         }
@@ -105,6 +108,7 @@ export function ClaimWorkbench({
         };
   const result = commitmentTermsSchema.safeParse({
     ...defaultTerms,
+    ...initialTerms,
     instrument,
     prediction,
     horizon:
@@ -117,6 +121,7 @@ export function ClaimWorkbench({
   function changeInstrument(id: string) {
     const next = instrumentCatalog.find((item) => item.id === id)!;
     setInstrumentId(id);
+    setRangeMetric("quoted_value");
     const candidate = instrumentCatalog.find(
       (item) => item.id !== id && item.quote.kind === next.quote.kind,
     );
@@ -239,11 +244,26 @@ export function ClaimWorkbench({
         )}
         {kind === "range" && (
           <div className="field-group">
+            <label htmlFor="range-metric">Range units</label>
+            <select
+              id="range-metric"
+              value={rangeMetric}
+              onChange={(event) => setRangeMetric(event.target.value)}
+            >
+              <option value="quoted_value">{isYield ? "Yield level (%)" : "Quoted price"}</option>
+              <option value={isYield ? "yield_change_bps" : "price_return_pct"}>
+                {isYield ? "Yield change (basis points)" : "Price return (%)"}
+              </option>
+            </select>
             <span className="field-label">
               Inclusive range (
-              {instrument.quote.kind === "yield"
-                ? "% yield"
-                : `${instrument.quote.currency} / ${instrument.quote.unit}`}
+              {rangeMetric === "price_return_pct"
+                ? "% price return"
+                : rangeMetric === "yield_change_bps"
+                  ? "basis points change"
+                  : instrument.quote.kind === "yield"
+                    ? "% yield"
+                    : `${instrument.quote.currency} / ${instrument.quote.unit}`}
               )
             </span>
             <div className="form-row">

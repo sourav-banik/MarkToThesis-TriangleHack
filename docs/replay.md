@@ -46,4 +46,4 @@ Flexible horizons remain available. A target beyond calendar coverage stays acti
 
 ## Next increment
 
-Part 4 prepares authentication, authorization, database privacy policies, atomic server timestamps, idempotent commitment, and append-only history; see [persistence setup](persistence.md). Browser copies cannot establish when a user first forecast something and must not be promoted into verified historical claims or live performance statistics. AI clarification and grounded reasoning review remain later integrations.
+Part 4 prepares authentication, authorization, database privacy policies, atomic server timestamps, idempotent commitment, and append-only history; see [persistence setup](persistence.md). Browser copies cannot establish when a user first forecast something and must not be promoted into verified historical claims or live performance statistics. Part 6 adds [Claude clarification](claude-parser.md) to the signed-in live composer. Replay remains manual; grounded reasoning review remains later work.

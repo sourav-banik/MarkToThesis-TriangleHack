@@ -1,6 +1,6 @@
 # Part 4: accounts and live commitment
 
-The connection is prepared for later. Without Supabase settings, the app still runs the synthetic replay, displays an honest account setup state, and cannot save live claims. No cloud project, user, email, or live market observation is created by the local demo.
+The connection uses server-side Supabase settings. Without them, the app still runs the synthetic replay, displays an honest account setup state, and cannot save live claims. No cloud project, user, email, or live market observation is created by the synthetic demo.
 
 ## Connect a project later
 
@@ -12,11 +12,13 @@ The connection is prepared for later. Without Supabase settings, the app still r
 4. Restart Next.js after changing environment variables. Open `/account`, register and confirm the email in the same browser, then sign in. Edit the public display name, handle, and bio. Password recovery and account deletion interfaces are outside this increment.
 5. Open `/new`, enter the original wording, manually define the terms, review them, and confirm. The database returns the logged timestamp. Private is the default; choose public before confirmation to put a call on the feed and `/u/[handle]`.
 
-Use the same hostname in the browser and `APP_URL`; `localhost` and `127.0.0.1` are different origins. `APP_URL` controls mutation-origin checks, redirects, and secure cookies. All environment variables stay on the server; none needs a `NEXT_PUBLIC_` prefix. Gemini and market-provider credentials are unnecessary for Part 4.
+Use the same hostname in the browser and `APP_URL`; `localhost` and `127.0.0.1` are different origins. `APP_URL` controls mutation-origin checks, redirects, and secure cookies. All environment variables stay on the server; none needs a `NEXT_PUBLIC_` prefix. AI and market-provider credentials are unnecessary for manual commitment. Part 6 uses `ANTHROPIC_API_KEY` for optional [Claude clarification](claude-parser.md).
 
 These migrations target a project where the application tables do not already exist. They are not a reset script. Do not run `supabase/tests/bootstrap.sql` against a real project: it supplies a test-only Auth fixture. The repository does not yet include a linked Supabase CLI project.
 
 ## Modules and request boundaries
+
+Part 5 extends the read side with filtered feeds and full-history summaries; see [feed and record behavior](feed-and-records.md). It uses these same migrations, without schema changes.
 
 | Module                                      | Responsibility                                                                        |
 | ------------------------------------------- | ------------------------------------------------------------------------------------- |

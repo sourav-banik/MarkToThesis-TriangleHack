@@ -1,4 +1,4 @@
-# Application architecture: Parts 1–4
+# Application architecture: Parts 1–6
 
 ## Boundaries
 
@@ -14,6 +14,10 @@ This is one modular Next.js application. Route files render feature components; 
 
 Part 4 adds verified account services, per-request Supabase clients, and database migrations. Their connection is prepared for later; missing configuration produces an explicit setup state rather than simulated sign-in or publishing. See [accounts and live commitment](persistence.md).
 
+Part 5 adds server-filtered public/owner history, joined author identities, precise cursor pagination, and complete-history counts. Read-only feed services live in `features/feed`; author lookup and profile presentation live in `features/profiles`. Neither owns commitment or financial scoring. See [feed and author records](feed-and-records.md).
+
+Part 6 adds Claude extraction and clarification behind a server-only adapter. The model proposes source-backed fields; application code identifies missing terms and validates the full proposal. Applying it only prefills an editable form. The existing commitment endpoint remains the sole path to logging. See [Claude parser](claude-parser.md). Shared platform conventions live in `features/claims/conventions.ts`, independently of demo data.
+
 ## Claim kinds
 
 | Kind                     | Testable meaning                                                                                                                                                                              |
@@ -24,7 +28,7 @@ Part 4 adds verified account services, per-request Supabase clients, and databas
 | Hold / maintain position | Author's position stance; unscored. It neither verifies a position nor creates a win/miss.                                                                                                    |
 | Range                    | Inclusive lower and upper bounds, checked at review or every daily observation. Metric is quoted value, price return percent, or yield change in basis points.                                |
 
-No default benchmark, tolerance, range, or confidence should be invented by a future parser. Incomplete drafts are separate from confirmed terms. The workbench is a format sandbox with editable example defaults, not an AI interpretation of user text.
+No default benchmark, tolerance, range, or confidence is invented by the parser. Incomplete drafts are separate from confirmed terms. AI clarification blocks application until required terms are explicit; the manual workbench starts with disclosed example defaults and becomes an AI prefill only after the user applies a validated proposal.
 
 Comparison metrics must match observation types. Yield changes cannot be compared against equity price returns. Cross-currency price comparisons are rejected until an explicit FX method exists. Strict comparison ties will be not met. Range bounds are inclusive. Daily sampling does not establish that a condition held intraday.
 
@@ -80,7 +84,7 @@ AI reviews are not causal proof of a price movement. There is no market-performa
 
 ## Next increment
 
-Part 4 prepares authentication, database protections, atomic server-side commitment, and basic live record views. Next, connect and verify the actual Supabase project, then deepen live feed/profile behavior within the agreed modular build sequence. AI parsing and market-provider/resolution integration remain separate increments. Synthetic replay records stay separate from real claims.
+Parts 4–6 provide authentication, protected commitment, public/owner records, and Claude claim clarification. Part 7 can connect market data and live resolution as its own module. Synthetic replay records stay separate from real claims. Existing live counts cover pending/unscored commitments; extend their status model and presentation together when persisted resolutions arrive. Grounded rationale review remains distinct from parsing and numerical resolution.
 
 ## Dependency maintenance
 

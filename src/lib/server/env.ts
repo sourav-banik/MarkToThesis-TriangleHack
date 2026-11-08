@@ -34,7 +34,14 @@ const serverEnvSchema = z.object({
       }, "Use a Supabase publishable/anon key, never a privileged secret or service-role key.")
       .optional(),
   ),
-  GEMINI_API_KEY: optionalSecret,
+  ANTHROPIC_API_KEY: optionalSecret,
+  ANTHROPIC_MODEL: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z
+      .string()
+      .regex(/^claude-[a-z0-9-]+$/)
+      .optional(),
+  ),
   TWELVE_DATA_API_KEY: optionalSecret,
   FRED_API_KEY: optionalSecret,
 });
@@ -45,10 +52,18 @@ export function getServerEnv() {
     APP_URL: process.env.APP_URL,
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY,
-    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL,
     TWELVE_DATA_API_KEY: process.env.TWELVE_DATA_API_KEY,
     FRED_API_KEY: process.env.FRED_API_KEY,
   });
+}
+
+export function getClaudeConfig() {
+  const env = getServerEnv();
+  return env.ANTHROPIC_API_KEY
+    ? { apiKey: env.ANTHROPIC_API_KEY, model: env.ANTHROPIC_MODEL ?? "claude-haiku-4-5-20251001" }
+    : null;
 }
 
 export function getSupabaseConfig() {

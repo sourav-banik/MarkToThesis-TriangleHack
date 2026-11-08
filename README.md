@@ -2,9 +2,9 @@
 
 An AI-powered platform for making clear market claims and building a transparent record of their outcomes.
 
-## Current increment: Part 4
+## Current increment: Part 6
 
-This repository contains the Next.js foundation, shared domain contracts, a deterministic resolution engine, a complete tab-local synthetic replay flow, and prepared Supabase authentication and persistent commitment. The preview runs without API keys; connect Supabase later to enable accounts and live records.
+This repository contains the Next.js foundation, shared domain contracts, a deterministic resolution engine, a tab-local synthetic replay, Supabase authentication and persistent commitment, public/owner records, and Claude-powered claim parsing. The preview runs without API keys; Supabase enables live accounts, and an Anthropic API key enables authenticated AI clarification.
 
 Included:
 
@@ -19,8 +19,10 @@ Included:
 - Email/password account routes, confirmation callback, public profile editing, and server-verified session access.
 - Atomic database-timestamped commitments, owner/private RLS, append-only terms, and idempotent retries.
 - Separate public live feed, owner history, public author pages, and saved-claim details.
+- Server-side search and filters, author/confidence details, precise cursor pagination, resilient page retries, and full-history profile summaries.
+- Claude structured extraction, missing-term questions, source-checked proposals, editable prefilling, and required review before commitment.
 
-Supabase is intentionally unconfigured for now. Follow [the connection and persistence guide](docs/persistence.md) when ready; the app does not simulate successful sign-in or server saves. AI parsing, market-data retrieval, live resolution, and comments are not connected. Measurable live commitments await their starting observations; position-only holds are unscored. Selected instruments have fixed source bindings; other measurable live forecasts remain blocked until their exact provider/fixing is defined.
+Follow [the connection and persistence guide](docs/persistence.md) to configure Supabase and [the Claude parser guide](docs/claude-parser.md) to enable AI clarification. Missing keys produce honest setup states and manual entry remains available. Market-data retrieval, live resolution, evidence-based AI reasoning review, and comments are not connected. Measurable live commitments await their starting observations; position-only holds are unscored. Selected instruments have fixed source bindings; other measurable live forecasts remain blocked until their exact provider/fixing is defined.
 
 Replay confirmation uses the browser clock and `sessionStorage`, not a server timestamp or immutable database record. All replay prices and prior outcomes are fabricated examples. Replay records remain separate from real accounts and live tables.
 
@@ -29,13 +31,21 @@ Replay confirmation uses the browser clock and `sessionStorage`, not a server ti
 Open `/replay`, or choose **Start replay** on the feed:
 
 1. Keep or replace the vague original call; optionally add reasoning and what would change your view.
-2. Manually specify the instrument, prediction, horizon, and optional confidence. AI clarification is not connected yet.
+2. Manually specify the instrument, prediction, horizon, and optional confidence. Replay remains manual; Claude clarification is available in the signed-in live-claim flow.
 3. Review the original wording and exact measurement terms. Edit before confirming if needed.
 4. Confirm and lock a copy in this tab. Browser confirmation time stays separate from the January 2024 simulated market dates.
 5. Run resolution. The Part 2 engine supplies the result, input table, saved rules, and daily checks.
 6. Open the fictional demo author's history and see the new replay beside synthetic met, missed, unclear, pending, and unscored examples.
 
 The default three-day replay produces +10% asset return, +5% benchmark return, and +5 percentage points excess. The UI dataset is `synthetic-ui-v1`, with fabricated observations dated January 2–10, 2024. Longer horizons can remain pending rather than borrowing later prices. Reloads in the same tab restore confirmed replays; storage failures are disclosed and fall back to memory. Closing the tab or clearing its storage can lose them. Replay URLs are tab-local, not public share links. See [replay behavior and limitations](docs/replay.md).
+
+## Browse live records
+
+Once Supabase is configured, public calls appear on `/`. Search original wording, combine asset/type/status/horizon filters, and load older pages. Author links open `/u/[handle]`; `/profile` shows the signed-in owner's public and private calls. Profile summaries cover the full visible history, regardless of filters. Live accuracy and return statistics remain unavailable until market resolution is integrated. See [Part 5 behavior and boundaries](docs/feed-and-records.md). This increment needs no additional SQL migration.
+
+## Clarify a call with Claude
+
+Set `ANTHROPIC_API_KEY` in `.env.local`, restart the app, sign in, and open `/new`. Enter a call, select **Make this call testable**, answer missing-term questions, and **Use proposed terms** to prefill an editable form. Review and confirm separately to save. `ANTHROPIC_MODEL` optionally changes the model; the default is `claude-haiku-4-5-20251001`. No Gemini integration is used. See [Part 6 setup, behavior, and limitations](docs/claude-parser.md).
 
 ## Local setup
 
@@ -57,6 +67,8 @@ npm run build
 
 The tests cover contract validation and deterministic financial calculations, including ties, inclusive bounds, daily breaches, calendar alignment, month ends, leap years, missing prices, publication delays, split bases, replay timestamps, and evidence references. They also verify account authorization, strict mutation input, origin/cache boundaries, commitment RPC behavior, and safe persistence failures. Run just the engine checks with `npm run test:resolution`.
 
+Claude parsing tests use fixtures. For two real, billable API checks with synthetic calls, run `npm run check:claude` after configuring the key. This command never saves a claim.
+
 Run `npm run test:database` with installed PostgreSQL binaries to test the actual migrations, privacy policies, append-only protections, rollback, and concurrent retries in a fresh disposable local cluster. See [database validation and its limits](docs/persistence.md#validation). No Supabase credentials or existing database are used.
 
 The engine entry point is `resolveClaim` in `src/features/resolution/resolve.ts`. Supply a committed claim version, a stable resolution ID, an explicit `asOf` timestamp, independently supplied observation schedules, and price/yield snapshots. `syntheticResolutionRequest()` in `src/demo/resolution.ts` supplies a fabricated replay request: asset +10%, benchmark +5%, excess +5 percentage points, outcome met. It is not real historical market data. Position-only holds require only the claim, ID, and clock; they remain unscored without fetching prices.
@@ -71,24 +83,24 @@ npm run build
 npm run test:e2e
 ```
 
-If a compatible Chrome or Edge is already installed, set `PLAYWRIGHT_CHANNEL=chrome` or `PLAYWRIGHT_CHANNEL=msedge` instead of downloading Chromium. Browser tests check the replay, workspace screens, unconfigured accounts, and mocked live review/retry behavior. Real Supabase sign-in and email confirmation still need a connected-project check. Screenshots and failure traces are written to the ignored `test-results` directory.
+If a compatible Chrome or Edge is already installed, set `PLAYWRIGHT_CHANNEL=chrome` or `PLAYWRIGHT_CHANNEL=msedge` instead of downloading Chromium. Browser tests check replay, workspace screens, accounts, live review, feed filters/pagination, profile summaries, and clearing owner records on sign-out. The browser test server clears Supabase settings and uses explicit fixtures for live records. Real sign-in and email confirmation still need a connected-project check. Screenshots and failure traces are written to the ignored `test-results` directory.
 
 ## Modules
 
-| Location                   | Responsibility                                                                       |
-| -------------------------- | ------------------------------------------------------------------------------------ |
-| `src/app`                  | Thin routes, layouts, global styles, route states                                    |
-| `src/components`           | Shared UI and navigation                                                             |
-| `src/features/claims`      | Claim contracts, workbench, live commitment service, and record presentation         |
-| `src/features/auth`        | Account contracts, verified sessions, and account UI                                 |
-| `src/features/market-data` | Instrument catalog, observation contracts, adapter boundary                          |
-| `src/features/resolution`  | Calendar selection, exact arithmetic, data validation, and deterministic resolution  |
-| `src/features/replay`      | Versioned synthetic dataset, validated tab store, confirmation, results, and history |
-| `src/features/ai`          | Parser, evidence, and reasoning-review contracts                                     |
-| `src/features/feed`        | Illustrative feed presentation                                                       |
-| `src/features/profiles`    | Public profile contract                                                              |
-| `src/lib/server`           | Server-only configuration, Supabase clients, and HTTP boundaries                     |
-| `supabase`                 | Database migrations and SQL policy/commitment tests                                  |
-| `src/demo`                 | Clearly labeled claim examples and fabricated resolution fixtures                    |
+| Location                   | Responsibility                                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------- |
+| `src/app`                  | Thin routes, layouts, global styles, route states                                           |
+| `src/components`           | Shared UI and navigation                                                                    |
+| `src/features/claims`      | Claim contracts, workbench, live commitment service, and record presentation                |
+| `src/features/auth`        | Account contracts, verified sessions, and account UI                                        |
+| `src/features/market-data` | Instrument catalog, observation contracts, adapter boundary                                 |
+| `src/features/resolution`  | Calendar selection, exact arithmetic, data validation, and deterministic resolution         |
+| `src/features/replay`      | Versioned synthetic dataset, validated tab store, confirmation, results, and history        |
+| `src/features/ai`          | Claude adapter, grounded proposal validation, clarification UI, and future review contracts |
+| `src/features/feed`        | Scoped live queries, filters, cursor pagination, summaries, and example feed                |
+| `src/features/profiles`    | Safe author lookup, owner profile header, and record summaries                              |
+| `src/lib/server`           | Server-only configuration, Supabase clients, and HTTP boundaries                            |
+| `supabase`                 | Database migrations and SQL policy/commitment tests                                         |
+| `src/demo`                 | Clearly labeled claim examples and fabricated resolution fixtures                           |
 
-Read [the domain rules and module boundaries](docs/architecture.md) before adding services. Part 4 prepares authentication, database protections, and persistent server-side commitment. Keep browser-only replay records out of prospective public statistics.
+Read [the domain rules and module boundaries](docs/architecture.md) before adding services. Parts 4–6 connect persistent commitment, records, and Claude clarification. Live price resolution remains a separate increment. Keep browser-only replay records out of prospective public statistics.

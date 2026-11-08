@@ -4,6 +4,8 @@ import Link from "next/link";
 import { createPublicSupabaseClient } from "@/lib/server/supabase";
 import { LiveClaimList } from "@/features/claims/components/live-claim-list";
 import { EmptyState } from "@/components/ui/empty-state";
+import { getPublicProfile } from "@/features/profiles/server";
+import { HttpError } from "@/lib/server/http";
 
 export const metadata: Metadata = { title: "Public author record" };
 export default async function PublicAuthorPage({
@@ -28,20 +30,17 @@ export default async function PublicAuthorPage({
         </EmptyState>
       </div>
     );
-  const { data, error } = await client
-    .from("profiles")
-    .select("handle,display_name,bio")
-    .eq("handle", handle)
-    .maybeSingle();
-  if (error) throw new Error("Author records are temporarily unavailable.");
-  if (!data) notFound();
+  const profile = await getPublicProfile(client, handle).catch((error: unknown) => {
+    if (error instanceof HttpError && error.status === 404) notFound();
+    throw error;
+  });
   return (
     <div className="page-container">
       <div className="page-heading">
         <span className="eyebrow">PUBLIC CLAIMS LOGGED ON PROVENALPHA</span>
-        <h1>{data.display_name}</h1>
+        <h1>{profile.displayName}</h1>
         <p>
-          @{data.handle} · {data.bio || "A public record of logged calls."}
+          @{profile.handle} · {profile.bio || "A public record of logged calls."}
         </p>
       </div>
       <div className="inline-note">

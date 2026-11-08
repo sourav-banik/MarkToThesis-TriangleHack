@@ -9,7 +9,7 @@ import { replayCounts } from "../presentation";
 import { useReplayStore } from "../store";
 import { ReplayNotice } from "./replay-notice";
 import { ReplayRecordCard } from "./replay-record-card";
-import { LiveClaimList } from "@/features/claims/components/live-claim-list";
+import { OwnerRecord } from "@/features/profiles/components/owner-record";
 
 export function ReplayHistory({ initialTab = "demo" }: { initialTab?: "demo" | "live" }) {
   const state = useReplayStore();
@@ -33,15 +33,7 @@ export function ReplayHistory({ initialTab = "demo" }: { initialTab?: "demo" | "
         </button>
       </div>
       {tab === "live" ? (
-        <section className="live-history">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">YOUR DATABASE RECORDS</span>
-              <h2>Public and private calls</h2>
-            </div>
-          </div>
-          <LiveClaimList scope="mine" />
-        </section>
+        <OwnerRecord />
       ) : (
         <>
           <ReplayNotice />

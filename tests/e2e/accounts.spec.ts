@@ -26,7 +26,12 @@ test("unconfigured accounts do not offer a fake sign-in or create server claims"
   });
   expect(unconfigured.status()).toBe(503);
   const publicFeed = await page.request.get("/api/claims");
-  expect(await publicFeed.json()).toEqual({ configured: false, claims: [], nextCursor: null });
+  expect(await publicFeed.json()).toEqual({
+    configured: false,
+    claims: [],
+    nextCursor: null,
+    summary: null,
+  });
   expect(publicFeed.headers()["cache-control"]).toContain("no-store");
 });
 
@@ -57,6 +62,7 @@ test("live review and retry preserve one submission key without inventing a save
     });
   });
   await page.goto("/new");
+  await page.getByRole("button", { name: "Define manually", exact: true }).click();
   await page
     .getByLabel("Original market call", { exact: true })
     .fill("AAPL will outperform SPY in the next month.");
@@ -95,6 +101,7 @@ test("live requests reject unresolved price references while an unscored stance 
     }),
   );
   await page.goto("/new");
+  await page.getByRole("button", { name: "Define manually", exact: true }).click();
   await page.getByLabel("Original market call", { exact: true }).fill("My view of Bitcoin.");
   await page.getByLabel("Instrument", { exact: true }).selectOption("crypto:btc:usd");
   await page.getByRole("button", { name: "Review live claim", exact: true }).click();

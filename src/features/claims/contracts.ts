@@ -262,6 +262,10 @@ export const missingFieldSchema = z.enum([
   "range_bounds",
   "evaluation",
   "rationale",
+  "metric",
+  "instrument_reference",
+  "return_convention",
+  "ambiguity",
 ]);
 
 // Partial proposals are deliberately separate from publishable, confirmed terms.
